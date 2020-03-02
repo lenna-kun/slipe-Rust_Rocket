@@ -12,12 +12,10 @@ use std::sync::mpsc;
 use std::io::Cursor;
 use rand::Rng;
 
-///////////
 pub use std::io::{Read};
 pub use std::process::Command;
 pub use std::io::prelude::*;
 pub use std::time::{Duration, Instant};
-///////////
 
 use serde::{Deserialize, Serialize};
 use rocket_contrib::json::Json;
@@ -94,7 +92,6 @@ pub struct RoomCheck {
 
 #[get("/room_list")]
 fn room_list_get() -> ApiResponse {
-    // 部屋のリストおよび各部屋の条件を返す
     let res: String = global::ROOMLIST_HTML.clone();
     ApiResponse {
         body: res,
@@ -103,7 +100,6 @@ fn room_list_get() -> ApiResponse {
 
 #[post("/room_list")]
 fn room_list_post() -> ApiResponse {
-    // 部屋のリストおよび各部屋の条件を返す
     let mut room_list: [u8; 4] = [0; 4];
     let rules = global::RULES.lock().unwrap();
     for i in 0..4 {
@@ -120,8 +116,6 @@ fn room_list_post() -> ApiResponse {
 
 #[post("/make_room", data = "<room_info>")]
 fn make_room(mut cookies: Cookies, room_info: Json<RoomInfo>) -> Redirect {
-    // パスワードおよび条件(先手後手振り駒)の受け取り
-    // cookieの生成
     global::PASSWORDS.lock().unwrap()[room_info.0.id as usize] = Some(room_info.0.password);
     global::RULES.lock().unwrap()[room_info.0.id as usize] = Some(room_info.0.rule);
     let cookie = Cookie::build("id", format!("{}0", room_info.0.id))
@@ -134,8 +128,6 @@ fn make_room(mut cookies: Cookies, room_info: Json<RoomInfo>) -> Redirect {
 
 #[post("/enter_room", data = "<room_check>")]
 fn enter_room(mut cookies: Cookies, room_check: Json<RoomCheck>) -> ApiResponse {
-    // パスワードがあっていたら入室を許可
-    // cookieの生成
     if let Some(p) = &global::PASSWORDS.lock().unwrap()[room_check.0.id as usize] {
         if room_check.0.password == *p {
             let cookie = Cookie::build("id", format!("{}1", room_check.0.id))
@@ -160,8 +152,6 @@ fn enter_room(mut cookies: Cookies, room_check: Json<RoomCheck>) -> ApiResponse 
 
 #[get("/playing")]
 fn playing(mut cookies: Cookies) -> ApiResponse {
-    // いずれかの部屋のcookieを持っていたら対局ページを返す
-    // gameスレッドを生成
     if let Some(cookie) = cookies.get_private("id") {
         if cookie.value().chars().nth(1).unwrap() == '0' {
             let mut rules = global::RULES.lock().unwrap();
@@ -267,9 +257,6 @@ fn playing(mut cookies: Cookies) -> ApiResponse {
 
 #[post("/playing/board")]
 fn playing_board(mut cookies: Cookies) -> ApiResponse {
-    // cookieをチェックし，どの部屋へのメッセージかを確認
-    // global::SENDERにリクエストを流す
-    // global::RECEIVERに流れてきたレスポンスを返す
     if let Some(cookie) = cookies.get_private("id") {
         let val: String = format!("{}board", cookie.value().chars().nth(1).unwrap());
         global::SENDERS.lock().unwrap()[cookie.value().chars().nth(0).unwrap().to_string().parse::<usize>().unwrap()].as_ref().unwrap().send(val).unwrap();
@@ -289,9 +276,6 @@ fn playing_board(mut cookies: Cookies) -> ApiResponse {
 
 #[post("/playing/set", data = "<set>")]
 fn playing_set(mut cookies: Cookies, set: ApiResponse) -> ApiResponse {
-    // cookieをチェックし，どの部屋へのメッセージかを確認
-    // global::SENDERにリクエストを流す
-    // global::RECEIVERに流れてきたレスポンスを返す
     if let Some(cookie) = cookies.get_private("id") {
         let set: String = set.body[4..7].to_string();
         let val: String = format!("{}set{:?}", cookie.value().chars().nth(1).unwrap(), set);

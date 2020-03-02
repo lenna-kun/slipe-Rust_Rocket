@@ -41,7 +41,7 @@ impl GameInfo {
         if parameters[0] <= 0 || parameters[1] <= 0 || parameters[0] >= 6 || parameters[1] >= 6 {
             return Err(String::from("invalid index"));
         }
-        if self.board[parameters[0]][parameters[1]] != 2*self.turn+1 || self.board[parameters[0]][parameters[1]] != 2*self.turn+2 {
+        if self.board[parameters[0]][parameters[1]] != 2*self.turn+1 && self.board[parameters[0]][parameters[1]] != 2*self.turn+2 {
             return Err(String::from("not your piece"));
         }
         let mut dst: [usize; 2] = [parameters[0], parameters[1]];
@@ -119,8 +119,6 @@ impl GameInfo {
                                     self.tx.send(response).unwrap();
                                 } else {
                                     panic!("unexpected request");
-                                    // let response: String = String::from("reject");
-                                    // self.tx.send(response).unwrap();
                                 }
                             } else {
                                 let response: String = String::from("reject");
@@ -157,8 +155,6 @@ impl GameInfo {
                                 self.tx.send(response).unwrap();
                             } else {
                                 panic!("unexpected request");
-                                // let response: String = String::from("reject");
-                                // self.tx.send(response).unwrap();
                             }
                         } else {
                             let response: String = String::from("reject");
@@ -199,7 +195,7 @@ impl GameInfo {
                     Err(_) => (),
                 }
             }
-            
+
             if self.turn == 0 {
                 self.turn = 1;
             } else {
