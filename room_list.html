@@ -149,7 +149,7 @@
                         url: url,
                         data: JSON.stringify(JSONdata),
                         contentType: 'application/JSON',
-                        dataType: 'JSON',
+                        dataType: 'text',
                         scriptCharset: 'utf-8'
                     });
                 })
@@ -164,8 +164,13 @@
                         url: url,
                         data: JSON.stringify(JSONdata),
                         contentType: 'application/JSON',
-                        dataType: 'JSON',
-                        scriptCharset: 'utf-8'
+                        dataType: 'text',
+                        scriptCharset: 'utf-8',
+                        success : function(result) {
+                            if (result == "Ok") {
+                                location.href = "/playing";
+                            }
+                        }
                     });
                 })
             })

@@ -91,7 +91,8 @@ pub struct RoomCheck {
 }
 
 #[get("/room_list")]
-fn room_list_get() -> ApiResponse {
+fn room_list_get(mut cookies: Cookies) -> ApiResponse {
+    cookies.remove_private(Cookie::named("id"));
     let res: String = global::ROOMLIST_HTML.clone();
     ApiResponse {
         body: res,
@@ -120,7 +121,7 @@ fn make_room(mut cookies: Cookies, room_info: Json<RoomInfo>) -> ApiResponse {
     global::RULES.lock().unwrap()[room_info.0.id as usize] = Some(room_info.0.rule);
     global::RULES_RESULT.lock().unwrap()[room_info.0.id as usize] = Some(room_info.0.rule);
     let cookie = Cookie::build("id", format!("{}0", room_info.0.id))
-        .path("/playing")
+        .path("/")
         // .secure(true)
         .finish();
     cookies.add_private(cookie);
@@ -136,7 +137,7 @@ fn enter_room(mut cookies: Cookies, room_check: Json<RoomCheck>) -> ApiResponse 
         if room_check.0.password == *p && !chk[room_check.0.id as usize] {
             chk[room_check.0.id as usize] = true;
             let cookie = Cookie::build("id", format!("{}1", room_check.0.id))
-                .path("/playing")
+                .path("/")
                 // .secure(true)
                 .finish();
             cookies.add_private(cookie);
