@@ -132,7 +132,9 @@ fn make_room(mut cookies: Cookies, room_info: Json<RoomInfo>) -> ApiResponse {
 #[post("/enter_room", data = "<room_check>")]
 fn enter_room(mut cookies: Cookies, room_check: Json<RoomCheck>) -> ApiResponse {
     if let Some(p) = &global::PASSWORDS.lock().unwrap()[room_check.0.id as usize] {
-        if room_check.0.password == *p {
+        let mut chk = global::STARTED.lock().unwrap();
+        if room_check.0.password == *p && !chk[room_check.0.id as usize] {
+            chk[room_check.0.id as usize] = true;
             let cookie = Cookie::build("id", format!("{}1", room_check.0.id))
                 .path("/playing")
                 // .secure(true)
