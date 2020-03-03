@@ -23,7 +23,7 @@ use rocket_contrib::json::Json;
 use rocket::http::Status;
 use rocket::request::Request;
 use rocket::response;
-use rocket::response::{Responder, Response, Redirect};
+use rocket::response::{Responder, Response};
 use rocket::{Data, Outcome::*};
 use rocket::data::{self, FromDataSimple};
 use rocket::http::hyper::header::{AccessControlAllowOrigin};
@@ -110,20 +110,23 @@ fn room_list_post() -> ApiResponse {
         }
     }
     ApiResponse {
-        body: format!("{}{}{}{}", room_list[0], room_list[1], room_list[2], room_list[3]),
+        body: format!("{}/{}/{}/{}", room_list[0], room_list[1], room_list[2], room_list[3]),
     }
 }
 
 #[post("/make_room", data = "<room_info>")]
-fn make_room(mut cookies: Cookies, room_info: Json<RoomInfo>) -> Redirect {
+fn make_room(mut cookies: Cookies, room_info: Json<RoomInfo>) -> ApiResponse {
     global::PASSWORDS.lock().unwrap()[room_info.0.id as usize] = Some(room_info.0.password);
     global::RULES.lock().unwrap()[room_info.0.id as usize] = Some(room_info.0.rule);
+    global::RULES_RESULT.lock().unwrap()[room_info.0.id as usize] = Some(room_info.0.rule);
     let cookie = Cookie::build("id", format!("{}0", room_info.0.id))
         .path("/playing")
         // .secure(true)
         .finish();
     cookies.add_private(cookie);
-    Redirect::to("/playing")
+    ApiResponse {
+        body: String::from("Ok"),
+    }
 }
 
 #[post("/enter_room", data = "<room_check>")]
@@ -154,7 +157,7 @@ fn enter_room(mut cookies: Cookies, room_check: Json<RoomCheck>) -> ApiResponse 
 fn playing(mut cookies: Cookies) -> ApiResponse {
     if let Some(cookie) = cookies.get_private("id") {
         if cookie.value().chars().nth(1).unwrap() == '0' {
-            let mut rules = global::RULES.lock().unwrap();
+            let mut rules = global::RULES_RESULT.lock().unwrap();
             if let Some(FURIGOMA) = rules[cookie.value().chars().nth(0).unwrap().to_string().parse::<usize>().unwrap()] {
                 let mut rng = rand::thread_rng();
                 let furigoma: u8 = rng.gen::<u8>() % 2;
@@ -186,7 +189,7 @@ fn playing(mut cookies: Cookies) -> ApiResponse {
                 };
             }
         } else {
-            let mut rules = global::RULES.lock().unwrap();
+            let mut rules = global::RULES_RESULT.lock().unwrap();
             if let Some(FURIGOMA) = rules[cookie.value().chars().nth(0).unwrap().to_string().parse::<usize>().unwrap()] {
                 let mut rng = rand::thread_rng();
                 let furigoma: u8 = rng.gen::<u8>() % 2;
