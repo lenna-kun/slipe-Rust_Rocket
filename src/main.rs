@@ -277,6 +277,9 @@ fn playing_board(mut cookies: Cookies) -> ApiResponse {
         }
         loop {
             if let Ok(response) = global::RECEIVERS.lock().unwrap()[cookie.value().chars().nth(0).unwrap().to_string().parse::<usize>().unwrap()].as_ref().unwrap().recv() {
+                if let Some(_) = response.find("winner") {
+                    cookies.remove_private(Cookie::named("id"));
+                }
                 return ApiResponse {
                     body: response,
                 };

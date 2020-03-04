@@ -1,6 +1,8 @@
 use std::time::Instant;
 use std::sync::mpsc;
 
+use super::global;
+
 const	NONE: u8 = 0;
 const   SOLDIER1: u8 = 1;
 const	KING1: u8 = 2;
@@ -9,7 +11,7 @@ const	KING2: u8 = 4;
 const   WALL: u8 = 5;
 const	GOAL: u8 = 6;
 
-const   TIMEOUT: u64 = 300;
+const   TIMEOUT: u64 = 30;
 
 #[derive(Debug)]
 pub struct GameInfo {
@@ -90,6 +92,13 @@ impl GameInfo {
         Ok(())
     }
 
+    fn finalize(&self) {
+        global::RULES.lock().unwrap()[self.room_id as usize] = None;
+        global::RULES_RESULT.lock().unwrap()[self.room_id as usize] = None;
+        global::PASSWORDS.lock().unwrap()[self.room_id as usize] = None;
+        global::STARTED.lock().unwrap()[self.room_id as usize] = false;
+    }
+
     pub fn play_game(&mut self) {
         let mut winner: Option<u8> = None;
         let mut check_box: u8;
@@ -104,6 +113,7 @@ impl GameInfo {
                 let timer = Instant::now();
                 while check_box != 0b11 {
                     if timer.elapsed().as_secs() >= TIMEOUT {
+                        self.finalize();
                         panic!("timeout");
                     }
                     match self.rx.recv() {
@@ -128,6 +138,7 @@ impl GameInfo {
                         Err(_) => (),
                     }
                 }
+                self.finalize();
                 println!("The winner is Player{}.", p);
                 return;
             }
@@ -136,6 +147,7 @@ impl GameInfo {
             let timer = Instant::now();
             while check_box != 0b11 { // board
                 if timer.elapsed().as_secs() >= TIMEOUT {
+                    self.finalize();
                     panic!("timeout");
                 }
                 match self.rx.recv() {
@@ -169,6 +181,7 @@ impl GameInfo {
             let timer = Instant::now();
             loop { // set
                 if timer.elapsed().as_secs() >= TIMEOUT {
+                    self.finalize();
                     panic!("timeout");
                 }
                 match self.rx.recv() {
@@ -177,7 +190,6 @@ impl GameInfo {
                             if request.starts_with(&self.turn.to_string()) { // if the request is from the correct player
                                 let parameters: Vec<usize> = request[4..7].chars().map(|x| x.to_string().parse::<usize>().unwrap()).collect();
                                 if let Err(s) = self.set(parameters) {
-                                    // let response: String = String::from("Ok");
                                     self.tx.send(s).unwrap();
                                 } else {
                                     let response: String = String::from("Ok");
