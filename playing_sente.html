@@ -324,34 +324,67 @@
             body {
                 font-family: 'Osaka-Mono';
             }
-            #BOARD {
-                border-collapse:collapse;
-                border:3px solid #999; 
-                position: absolute;
-                left: 50%;
-                top: 50%;
-                transform: translate(-50%, -50%);
-                width: 85vh;
-                height: 85vh;
-                /* transition: .3s; */
-                opacity: 1.0;
+            @media screen and (orientation: landscape) {
+                #BOARD {
+                    border-collapse:collapse;
+                    border:3px solid #999; 
+                    position: absolute;
+                    left: 50%;
+                    top: 50%;
+                    transform: translate(-50%, -50%);
+                    width: 85vh;
+                    height: 85vh;
+                    /* transition: .3s; */
+                    opacity: 1.0;
+                }
+                #BOARD td {
+                    border:2px solid #999;
+                    /* background: rgb(233, 233, 233); */
+                    width:17vh;
+                    height:17vh;
+                    text-align:center;
+                }
+                #your_turn {
+                    position: absolute;
+                    left: 5%;
+                    top: -6%;
+                    opacity: 0.2;
+                    color: #72af00;
+                    font-size: 5vh;
+                    font-weight: bold;
+                    transition: .3s;
+                }
             }
-            #BOARD td {
-                border:2px solid #999;
-                /* background: rgb(233, 233, 233); */
-                width:17vh;
-                height:17vh;
-                text-align:center;
-            }
-            #your_turn {
-                position: absolute;
-                left: 5%;
-                top: -6%;
-                opacity: 0.2;
-                color: #72af00;
-                font-size: 5vh;
-                font-weight: bold;
-                transition: .3s;
+            @media screen and (orientation: portrait) {
+                #BOARD {
+                    border-collapse:collapse;
+                    border:3px solid #999; 
+                    position: absolute;
+                    left: 50%;
+                    top: 50%;
+                    transform: translate(-50%, -50%);
+                    width: 85vw;
+                    height: 85vw;
+                    /* transition: .3s; */
+                    opacity: 1.0;
+                }
+                #BOARD td {
+                    border:2px solid #999;
+                    /* background: rgb(233, 233, 233); */
+                    width:17vw;
+                    height:17vw;
+                    text-align:center;
+                }
+                #your_turn {
+                    position: absolute;
+                    left: 5%;
+                    top: -6%;
+                    opacity: 0.2;
+                    color: #72af00;
+                    font-size: 5vw;
+                    font-weight: bold;
+                    transition: .3s;
+                }
             }
             #esc {
                 position: absolute;
