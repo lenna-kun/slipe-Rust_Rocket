@@ -265,7 +265,16 @@ fn playing(mut cookies: Cookies) -> ApiResponse {
 fn playing_board(mut cookies: Cookies) -> ApiResponse {
     if let Some(cookie) = cookies.get_private("id") {
         let val: String = format!("{}board", cookie.value().chars().nth(1).unwrap());
-        global::SENDERS.lock().unwrap()[cookie.value().chars().nth(0).unwrap().to_string().parse::<usize>().unwrap()].as_ref().unwrap().send(val).unwrap();
+        if let None = global::SENDERS.lock().unwrap()[cookie.value().chars().nth(0).unwrap().to_string().parse::<usize>().unwrap()].as_ref() {
+            return ApiResponse {
+                body: String::from("Err"),
+            };
+        }
+        if let Err(_) = global::SENDERS.lock().unwrap()[cookie.value().chars().nth(0).unwrap().to_string().parse::<usize>().unwrap()].as_ref().unwrap().send(val) {
+            return ApiResponse {
+                body: String::from("Err"),
+            };
+        }
         loop {
             if let Ok(response) = global::RECEIVERS.lock().unwrap()[cookie.value().chars().nth(0).unwrap().to_string().parse::<usize>().unwrap()].as_ref().unwrap().recv() {
                 return ApiResponse {
@@ -274,9 +283,9 @@ fn playing_board(mut cookies: Cookies) -> ApiResponse {
             }
         }
     } else {
-        ApiResponse {
+        return ApiResponse {
             body: String::from("reject"),
-        }
+        };
     }
 }
 
@@ -284,19 +293,22 @@ fn playing_board(mut cookies: Cookies) -> ApiResponse {
 fn playing_set(mut cookies: Cookies, set: ApiResponse) -> ApiResponse {
     if let Some(cookie) = cookies.get_private("id") {
         let set: String = set.body[4..7].to_string();
-        let val: String = format!("{}set{:?}", cookie.value().chars().nth(1).unwrap(), set);
+        let mut val: String = format!("{}set{:?}", cookie.value().chars().nth(1).unwrap(), set);
+        val.retain(|c| c != '"');
+        println!("{:?}", val);
         global::SENDERS.lock().unwrap()[cookie.value().chars().nth(0).unwrap().to_string().parse::<usize>().unwrap()].as_ref().unwrap().send(val).unwrap();
         loop {
             if let Ok(response) = global::RECEIVERS.lock().unwrap()[cookie.value().chars().nth(0).unwrap().to_string().parse::<usize>().unwrap()].as_ref().unwrap().recv() {
+                println!("{:?}", response);
                 return ApiResponse {
                     body: response,
                 };
             }
         }
     } else {
-        ApiResponse {
+        return ApiResponse {
             body: String::from("reject"),
-        }
+        };
     }
 }
 

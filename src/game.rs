@@ -9,7 +9,7 @@ const	KING2: u8 = 4;
 const   WALL: u8 = 5;
 const	GOAL: u8 = 6;
 
-const   TIMEOUT: u64 = 30;
+const   TIMEOUT: u64 = 300;
 
 #[derive(Debug)]
 pub struct GameInfo {
@@ -47,34 +47,34 @@ impl GameInfo {
         let mut dst: [usize; 2] = [parameters[0], parameters[1]];
         match parameters[2] {
             0 => {
-                if self.board[parameters[0]-1][parameters[1]] != NONE {
+                if self.board[parameters[0]-1][parameters[1]] != NONE && self.board[parameters[0]-1][parameters[1]] != GOAL {
                     return Err(String::from("cannot move"));
                 }
-                while self.board[dst[0]-1][dst[1]] == NONE {
+                while self.board[dst[0]-1][dst[1]] == NONE || self.board[dst[0]-1][dst[1]] == GOAL {
                     dst[0] -= 1;
                 }
             },
             1 => {
-                if self.board[parameters[0]][parameters[1]+1] != NONE {
+                if self.board[parameters[0]][parameters[1]+1] != NONE && self.board[parameters[0]][parameters[1]+1] != GOAL {
                     return Err(String::from("cannot move"));
                 }
-                while self.board[dst[0]][dst[1]+1] == NONE {
+                while self.board[dst[0]][dst[1]+1] == NONE || self.board[dst[0]][dst[1]+1] == GOAL {
                     dst[1] += 1;
                 }
             },
             2 => {
-                if self.board[parameters[0]+1][parameters[1]] != NONE {
+                if self.board[parameters[0]+1][parameters[1]] != NONE && self.board[parameters[0]+1][parameters[1]] != GOAL {
                     return Err(String::from("cannot move"));
                 }
-                while self.board[dst[0]+1][dst[1]] == NONE {
+                while self.board[dst[0]+1][dst[1]] == NONE || self.board[dst[0]+1][dst[1]] == GOAL {
                     dst[0] += 1;
                 }
             },
             3 => {
-                if self.board[parameters[0]][parameters[1]-1] != NONE {
+                if self.board[parameters[0]][parameters[1]-1] != NONE && self.board[parameters[0]][parameters[1]-1] != GOAL {
                     return Err(String::from("cannot move"));
                 }
-                while self.board[dst[0]][dst[1]-1] == NONE {
+                while self.board[dst[0]][dst[1]-1] == NONE || self.board[dst[0]][dst[1]-1] == GOAL {
                     dst[1] -= 1;
                 }
             },
@@ -142,8 +142,9 @@ impl GameInfo {
                     Ok(request) => {
                         if let Some(_) = request.find("board") {
                             let mut response: String = String::new();
-                            for y in 1..6 {
-                                for x in 1..6 {
+                            response.push((self.turn + 48) as char);
+                            for x in 1..6 {
+                                for y in 1..6 {
                                     response.push((&self.board[x as usize][y as usize] + 48) as char);
                                 }
                             }
@@ -157,7 +158,7 @@ impl GameInfo {
                                 panic!("unexpected request");
                             }
                         } else {
-                            let response: String = String::from("reject");
+                            let response: String = String::from("now board");
                             self.tx.send(response).unwrap();
                         }
                     },
@@ -175,22 +176,22 @@ impl GameInfo {
                         if let Some(_) = request.find("set") {
                             if request.starts_with(&self.turn.to_string()) { // if the request is from the correct player
                                 let parameters: Vec<usize> = request[4..7].chars().map(|x| x.to_string().parse::<usize>().unwrap()).collect();
-                                if let Ok(_) = self.set(parameters) {
+                                if let Err(s) = self.set(parameters) {
+                                    // let response: String = String::from("Ok");
+                                    self.tx.send(s).unwrap();
+                                } else {
                                     let response: String = String::from("Ok");
                                     self.tx.send(response).unwrap();
-                                } else {
-                                    let response: String = String::from("Err");
-                                    self.tx.send(response).unwrap();
+                                    break;
                                 }
                             } else {
-                                let response: String = String::from("reject");
+                                let response: String = String::from("not your turn");
                                 self.tx.send(response).unwrap();
                             }
                         } else {
-                            let response: String = String::from("reject");
+                            let response: String = String::from("now set");
                             self.tx.send(response).unwrap();
                         }
-                        break;
                     },
                     Err(_) => (),
                 }

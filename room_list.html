@@ -150,7 +150,12 @@
                         data: JSON.stringify(JSONdata),
                         contentType: 'application/JSON',
                         dataType: 'text',
-                        scriptCharset: 'utf-8'
+                        scriptCharset: 'utf-8',
+                        success : function(result) {
+                            if (result == "Ok") {
+                                location.href = "/playing";
+                            }
+                        }
                     });
                 })
                 $("#enter_room_button").click( function(){
