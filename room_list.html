@@ -36,7 +36,7 @@
                 xhr.open('POST', '/room_list', false);
                 xhr.send();
             }
-            Timer = setInterval(get_room_list, 20);
+            Timer = setInterval(get_room_list, 100);
             $(function(){
                 $("#esc").click( function(){
                     var popup_list = [];
