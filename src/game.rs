@@ -11,7 +11,7 @@ const	KING2: u8 = 4;
 const   WALL: u8 = 5;
 const	GOAL: u8 = 6;
 
-const   TIMEOUT: u64 = 30;
+const   TIMEOUT: u64 = 300;
 
 #[derive(Debug)]
 pub struct GameInfo {
@@ -121,11 +121,21 @@ impl GameInfo {
                             if let Some(_) = request.find("board") {
                                 if request.starts_with("0") {
                                     check_box |= 2_u8.pow(0 as u32);
-                                    let response: String = format!("winner{}", p);
+                                    let mut response: String = format!("winner{}", p);
+                                    for x in 1..6 {
+                                        for y in 1..6 {
+                                            response.push((&self.board[x as usize][y as usize] + 48) as char);
+                                        }
+                                    }
                                     self.tx.send(response).unwrap();
                                 } else if request.starts_with("1") {
                                     check_box |= 2_u8.pow(1 as u32);
-                                    let response: String = format!("winner{}", p);
+                                    let mut response: String = format!("winner{}", p);
+                                    for x in 1..6 {
+                                        for y in 1..6 {
+                                            response.push((&self.board[x as usize][y as usize] + 48) as char);
+                                        }
+                                    }
                                     self.tx.send(response).unwrap();
                                 } else {
                                     panic!("unexpected request");
