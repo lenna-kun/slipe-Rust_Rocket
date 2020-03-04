@@ -216,18 +216,35 @@
                 visibility: hidden;
                 opacity: 0;
             }
-            #esc {
-                position: absolute;
-                z-index: 120;
-                transform: translate(-20%, -20%);
-                top: 20%;
-                left: 20%;
-                text-align: center;
-                opacity: 1;
-                font-size: 30px;
-                color: #dfdfdf;
-                cursor: pointer;
-                visibility: hidden;
+            @media screen and (orientation: landscape) {
+                #esc {
+                    position: absolute;
+                    z-index: 120;
+                    transform: translate(-20%, -20%);
+                    top: 20%;
+                    left: 20%;
+                    text-align: center;
+                    opacity: 1;
+                    font-size: 30px;
+                    color: #dfdfdf;
+                    cursor: pointer;
+                    visibility: hidden;
+                }
+            }
+            @media screen and (orientation: portrait) {
+                #esc {
+                    position: absolute;
+                    z-index: 120;
+                    transform: translate(-20%, -20%);
+                    top: 20%;
+                    left: 20%;
+                    text-align: center;
+                    opacity: 1;
+                    font-size: 150px;
+                    color: #dfdfdf;
+                    cursor: pointer;
+                    visibility: hidden;
+                }
             }
             #room_list {
                 position: absolute;
