@@ -117,16 +117,23 @@ fn room_list_post() -> ApiResponse {
 
 #[post("/make_room", data = "<room_info>")]
 fn make_room(mut cookies: Cookies, room_info: Json<RoomInfo>) -> ApiResponse {
-    global::PASSWORDS.lock().unwrap()[room_info.0.id as usize] = Some(room_info.0.password);
-    global::RULES.lock().unwrap()[room_info.0.id as usize] = Some(room_info.0.rule);
-    global::RULES_RESULT.lock().unwrap()[room_info.0.id as usize] = Some(room_info.0.rule);
-    let cookie = Cookie::build("id", format!("{}0", room_info.0.id))
-        .path("/")
-        // .secure(true)
-        .finish();
-    cookies.add_private(cookie);
-    ApiResponse {
-        body: String::from("Ok"),
+    let mut rules = global::RULES.lock().unwrap();
+    if let None = rules[room_info.0.id as usize] {
+        global::PASSWORDS.lock().unwrap()[room_info.0.id as usize] = Some(room_info.0.password);
+        rules[room_info.0.id as usize] = Some(room_info.0.rule);
+        global::RULES_RESULT.lock().unwrap()[room_info.0.id as usize] = Some(room_info.0.rule);
+        let cookie = Cookie::build("id", format!("{}0", room_info.0.id))
+            .path("/")
+            // .secure(true)
+            .finish();
+        cookies.add_private(cookie);
+        ApiResponse {
+            body: String::from("Ok"),
+        }
+    } else {
+        ApiResponse {
+            body: String::from("Err"),
+        }
     }
 }
 
