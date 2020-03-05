@@ -11,7 +11,7 @@ const	KING2: u8 = 4;
 const   WALL: u8 = 5;
 const	GOAL: u8 = 6;
 
-const   TIMEOUT: u64 = 300;
+const   TIMEOUT: u64 = 60;
 
 #[derive(Debug)]
 pub struct GameInfo {
@@ -114,9 +114,9 @@ impl GameInfo {
                 while check_box != 0b11 {
                     if timer.elapsed().as_secs() >= TIMEOUT {
                         self.finalize();
-                        panic!("timeout");
+                        return;
                     }
-                    match self.rx.recv() {
+                    match self.rx.try_recv() {
                         Ok(request) => {
                             if let Some(_) = request.find("board") {
                                 if request.starts_with("0") {
@@ -138,7 +138,8 @@ impl GameInfo {
                                     }
                                     self.tx.send(response).unwrap();
                                 } else {
-                                    panic!("unexpected request");
+                                    self.finalize();
+                                    return;
                                 }
                             } else {
                                 let response: String = String::from("reject");
@@ -158,9 +159,9 @@ impl GameInfo {
             while check_box != 0b11 { // board
                 if timer.elapsed().as_secs() >= TIMEOUT {
                     self.finalize();
-                    panic!("timeout");
+                    return;
                 }
-                match self.rx.recv() {
+                match self.rx.try_recv() {
                     Ok(request) => {
                         if let Some(_) = request.find("board") {
                             let mut response: String = String::new();
@@ -177,7 +178,8 @@ impl GameInfo {
                                 check_box |= 2_u8.pow(1 as u32);
                                 self.tx.send(response).unwrap();
                             } else {
-                                panic!("unexpected request");
+                                self.finalize();
+                                return;
                             }
                         } else {
                             let response: String = String::from("now board");
@@ -192,9 +194,9 @@ impl GameInfo {
             loop { // set
                 if timer.elapsed().as_secs() >= TIMEOUT {
                     self.finalize();
-                    panic!("timeout");
+                    return;
                 }
-                match self.rx.recv() {
+                match self.rx.try_recv() {
                     Ok(request) => {
                         if let Some(_) = request.find("set") {
                             if request.starts_with(&self.turn.to_string()) { // if the request is from the correct player

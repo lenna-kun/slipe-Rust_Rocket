@@ -133,9 +133,8 @@ fn make_room(mut cookies: Cookies, room_info: Json<RoomInfo>) -> ApiResponse {
 #[post("/enter_room", data = "<room_check>")]
 fn enter_room(mut cookies: Cookies, room_check: Json<RoomCheck>) -> ApiResponse {
     if let Some(p) = &global::PASSWORDS.lock().unwrap()[room_check.0.id as usize] {
-        let mut chk = global::STARTED.lock().unwrap();
+        let chk = global::STARTED.lock().unwrap();
         if room_check.0.password == *p && !chk[room_check.0.id as usize] {
-            chk[room_check.0.id as usize] = true;
             let cookie = Cookie::build("id", format!("{}1", room_check.0.id))
                 .path("/")
                 // .secure(true)
@@ -159,6 +158,7 @@ fn enter_room(mut cookies: Cookies, room_check: Json<RoomCheck>) -> ApiResponse 
 #[get("/playing")]
 fn playing(mut cookies: Cookies) -> ApiResponse {
     if let Some(cookie) = cookies.get_private("id") {
+        let room_id: usize = cookie.value().chars().nth(0).unwrap().to_string().parse().unwrap();
         if cookie.value().chars().nth(1).unwrap() == '0' {
             let mut rules = global::RULES_RESULT.lock().unwrap();
             if let Some(FURIGOMA) = rules[cookie.value().chars().nth(0).unwrap().to_string().parse::<usize>().unwrap()] {
@@ -193,19 +193,20 @@ fn playing(mut cookies: Cookies) -> ApiResponse {
             }
         } else {
             let mut rules = global::RULES_RESULT.lock().unwrap();
-            if let Some(FURIGOMA) = rules[cookie.value().chars().nth(0).unwrap().to_string().parse::<usize>().unwrap()] {
+            if let Some(FURIGOMA) = rules[room_id] {
                 let mut rng = rand::thread_rng();
                 let furigoma: u8 = rng.gen::<u8>() % 2;
-                rules[cookie.value().chars().nth(0).unwrap().to_string().parse::<usize>().unwrap()] = Some(furigoma);
+                rules[room_id] = Some(furigoma);
                 
                 thread::spawn(move || {
                     let (tx1, rx1) = mpsc::channel();
                     let (tx2, rx2) = mpsc::channel();
-                    global::SENDERS.lock().unwrap()[cookie.value().chars().nth(0).unwrap().to_string().parse::<usize>().unwrap()] = Some(tx1);
-                    global::RECEIVERS.lock().unwrap()[cookie.value().chars().nth(0).unwrap().to_string().parse::<usize>().unwrap()] = Some(rx2);
-                    let mut game = game::GameInfo::from_data(cookie.value().chars().nth(0).unwrap().to_string().parse::<u8>().unwrap(), furigoma, tx2, rx1);
+                    global::SENDERS.lock().unwrap()[room_id] = Some(tx1);
+                    global::RECEIVERS.lock().unwrap()[room_id] = Some(rx2);
+                    let mut game = game::GameInfo::from_data(room_id as u8, furigoma, tx2, rx1);
                     game.play_game();
                 });
+                global::STARTED.lock().unwrap()[room_id] = true;
 
                 if furigoma == SENTE {
                     let res: String = global::PLAYING_GOTE_HTML.clone();
@@ -218,14 +219,14 @@ fn playing(mut cookies: Cookies) -> ApiResponse {
                         body: res,
                     };
                 }
-            } else if let Some(SENTE) = rules[cookie.value().chars().nth(0).unwrap().to_string().parse::<usize>().unwrap()] {
+            } else if let Some(SENTE) = rules[room_id] {
 
                 thread::spawn(move || {
                     let (tx1, rx1) = mpsc::channel();
                     let (tx2, rx2) = mpsc::channel();
-                    global::SENDERS.lock().unwrap()[cookie.value().chars().nth(0).unwrap().to_string().parse::<usize>().unwrap()] = Some(tx1);
-                    global::RECEIVERS.lock().unwrap()[cookie.value().chars().nth(0).unwrap().to_string().parse::<usize>().unwrap()] = Some(rx2);
-                    let mut game = game::GameInfo::from_data(cookie.value().chars().nth(0).unwrap().to_string().parse::<u8>().unwrap(), SENTE, tx2, rx1);
+                    global::SENDERS.lock().unwrap()[room_id] = Some(tx1);
+                    global::RECEIVERS.lock().unwrap()[room_id] = Some(rx2);
+                    let mut game = game::GameInfo::from_data(room_id as u8, SENTE, tx2, rx1);
                     game.play_game();
                 });
 
@@ -233,14 +234,14 @@ fn playing(mut cookies: Cookies) -> ApiResponse {
                 return ApiResponse {
                     body: res,
                 };
-            } else if let Some(GOTE) = rules[cookie.value().chars().nth(0).unwrap().to_string().parse::<usize>().unwrap()] {
+            } else if let Some(GOTE) = rules[room_id] {
 
                 thread::spawn(move || {
                     let (tx1, rx1) = mpsc::channel();
                     let (tx2, rx2) = mpsc::channel();
-                    global::SENDERS.lock().unwrap()[cookie.value().chars().nth(0).unwrap().to_string().parse::<usize>().unwrap()] = Some(tx1);
-                    global::RECEIVERS.lock().unwrap()[cookie.value().chars().nth(0).unwrap().to_string().parse::<usize>().unwrap()] = Some(rx2);
-                    let mut game = game::GameInfo::from_data(cookie.value().chars().nth(0).unwrap().to_string().parse::<u8>().unwrap(), GOTE, tx2, rx1);
+                    global::SENDERS.lock().unwrap()[room_id] = Some(tx1);
+                    global::RECEIVERS.lock().unwrap()[room_id] = Some(rx2);
+                    let mut game = game::GameInfo::from_data(room_id as u8, GOTE, tx2, rx1);
                     game.play_game();
                 });
 
@@ -276,12 +277,16 @@ fn playing_board(mut cookies: Cookies) -> ApiResponse {
             };
         }
         loop {
-            if let Ok(response) = global::RECEIVERS.lock().unwrap()[cookie.value().chars().nth(0).unwrap().to_string().parse::<usize>().unwrap()].as_ref().unwrap().recv() {
+            if let Ok(response) = global::RECEIVERS.lock().unwrap()[cookie.value().chars().nth(0).unwrap().to_string().parse::<usize>().unwrap()].as_ref().unwrap().recv_timeout(Duration::from_millis(100)) {
                 if let Some(_) = response.find("winner") {
                     cookies.remove_private(Cookie::named("id"));
                 }
                 return ApiResponse {
                     body: response,
+                };
+            } else {
+                return ApiResponse {
+                    body: String::from("Err"),
                 };
             }
         }
@@ -301,10 +306,14 @@ fn playing_set(mut cookies: Cookies, set: ApiResponse) -> ApiResponse {
         println!("{:?}", val);
         global::SENDERS.lock().unwrap()[cookie.value().chars().nth(0).unwrap().to_string().parse::<usize>().unwrap()].as_ref().unwrap().send(val).unwrap();
         loop {
-            if let Ok(response) = global::RECEIVERS.lock().unwrap()[cookie.value().chars().nth(0).unwrap().to_string().parse::<usize>().unwrap()].as_ref().unwrap().recv() {
+            if let Ok(response) = global::RECEIVERS.lock().unwrap()[cookie.value().chars().nth(0).unwrap().to_string().parse::<usize>().unwrap()].as_ref().unwrap().recv_timeout(Duration::from_millis(100)) {
                 println!("{:?}", response);
                 return ApiResponse {
                     body: response,
+                };
+            } else {
+                return ApiResponse {
+                    body: String::from("Err"),
                 };
             }
         }
@@ -315,8 +324,34 @@ fn playing_set(mut cookies: Cookies, set: ApiResponse) -> ApiResponse {
     }
 }
 
+#[get("/room_list/manage/clear/room_0")]
+fn clear_room_0() -> ApiResponse {
+    if !global::STARTED.lock().unwrap()[0] {
+        global::RULES.lock().unwrap()[0] = None;
+        global::RULES_RESULT.lock().unwrap()[0] = None;
+        global::PASSWORDS.lock().unwrap()[0] = None;
+    }
+    ApiResponse {
+        body: String::from("Ok"),
+    }
+}
+
+#[get("/room_list/manage/clear_rooms")]
+fn clear_rooms() -> ApiResponse {
+    for i in 0..4 {
+        if !global::STARTED.lock().unwrap()[i] {
+            global::RULES.lock().unwrap()[i] = None;
+            global::RULES_RESULT.lock().unwrap()[i] = None;
+            global::PASSWORDS.lock().unwrap()[i] = None;
+        }
+    }
+    ApiResponse {
+        body: String::from("Ok"),
+    }
+}
+
 fn main() {
     rocket::ignite()
-        .mount("/", routes![room_list_get, room_list_post, make_room, enter_room, playing, playing_board, playing_set])
+        .mount("/", routes![room_list_get, room_list_post, make_room, enter_room, playing, playing_board, playing_set, clear_rooms])
         .launch();
 }
