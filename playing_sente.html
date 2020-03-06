@@ -21,14 +21,14 @@
                         if (block == '0') {
                             board[5-i][5-j] = 0;
                             e.style.backgroundImage = "none"
-                            e.style.backgroundColor = "#EEEEEE";
+                            e.style.backgroundColor = "#343434";
                         } else if (block == '1') {
                             board[5-i][5-j] = 1;
                             e.style.backgroundImage = "none"
                             e.style.backgroundColor = "rgb(0, 55, 255)";
                         } else if (block == '2') {
                             board[5-i][5-j] = 2;
-                            e.style.backgroundImage = "-webkit-gradient(linear, 0 0, 100% 0, color-stop(.5, #E7F8FC), color-stop(.5, transparent), to(transparent))";
+                            e.style.backgroundImage = "-webkit-gradient(linear, 0 0, 100% 0, color-stop(.5, #343434), color-stop(.5, transparent), to(transparent))";
                             e.style.backgroundSize = "20px";
                             e.style.backgroundColor = "rgb(0, 55, 255)";
                         } else if (block == '3') {
@@ -37,7 +37,7 @@
                             e.style.backgroundColor = "rgb(255, 0, 55)";
                         } else if (block == '4') {
                             board[5-i][5-j] = 4;
-                            e.style.backgroundImage = "-webkit-gradient(linear, 0 0, 100% 0, color-stop(.5, #E7F8FC), color-stop(.5, transparent), to(transparent))";
+                            e.style.backgroundImage = "-webkit-gradient(linear, 0 0, 100% 0, color-stop(.5, #343434), color-stop(.5, transparent), to(transparent))";
                             e.style.backgroundSize = "20px";
                             e.style.backgroundColor = "rgb(255, 0, 55)";
                         } else if (block == '6') {
@@ -73,7 +73,7 @@
                                 elem.style.backgroundColor = "rgb(255, 255, 200)";
                                 elem.onmousedown = function () {};
                             } else {
-                                elem.style.backgroundColor = "#EEEEEE";
+                                elem.style.backgroundColor = "#343434";
                                 elem.onmousedown = function () {};
                             }
                         }
@@ -133,7 +133,7 @@
                             if (k == 2 && num_j == 2) {
                                 document.getElementById("s" + String(k+1) + String(5-num_j)).style.backgroundColor = "rgb(255, 255, 200)";
                             } else {
-                                document.getElementById("s" + String(k+1) + String(5-num_j)).style.backgroundColor = "#EEEEEE";
+                                document.getElementById("s" + String(k+1) + String(5-num_j)).style.backgroundColor = "#343434";
                             }
                         } else {
                             break;
@@ -144,7 +144,7 @@
                             if (k == 2 && num_j == 2) {
                                 document.getElementById("s" + String(k+1) + String(5-num_j)).style.backgroundColor = "rgb(255, 255, 200)";
                             } else {
-                                document.getElementById("s" + String(k+1) + String(5-num_j)).style.backgroundColor = "#EEEEEE";
+                                document.getElementById("s" + String(k+1) + String(5-num_j)).style.backgroundColor = "#343434";
                             }
                         } else {
                             break;
@@ -155,7 +155,7 @@
                             if (k == 2 && num_i == 2) {
                                 document.getElementById("s" + String(5-num_i) + String(k+1)).style.backgroundColor = "rgb(255, 255, 200)";
                             } else {
-                                document.getElementById("s" + String(5-num_i) + String(k+1)).style.backgroundColor = "#EEEEEE";
+                                document.getElementById("s" + String(5-num_i) + String(k+1)).style.backgroundColor = "#343434";
                             }
                         } else {
                             break;
@@ -166,7 +166,7 @@
                             if (k == 2 && num_i == 2) {
                                 document.getElementById("s" + String(5-num_i) + String(k+1)).style.backgroundColor = "rgb(255, 255, 200)";
                             } else {
-                                document.getElementById("s" + String(5-num_i) + String(k+1)).style.backgroundColor = "#EEEEEE";
+                                document.getElementById("s" + String(5-num_i) + String(k+1)).style.backgroundColor = "#343434";
                             }
                         } else {
                             break;
@@ -334,12 +334,12 @@
                     transform: translate(-50%, -50%);
                     width: 85vh;
                     height: 85vh;
-                    /* transition: .3s; */
+                    background: #343434;
                     opacity: 1.0;
                 }
                 #BOARD td {
                     border:2px solid #999;
-                    /* background: rgb(233, 233, 233); */
+                    background: #343434;
                     width:17vh;
                     height:17vh;
                     text-align:center;
@@ -378,12 +378,12 @@
                     transform: translate(-50%, -50%);
                     width: 85vw;
                     height: 85vw;
-                    /* transition: .3s; */
+                    background: #343434;
                     opacity: 1.0;
                 }
                 #BOARD td {
                     border:2px solid #999;
-                    /* background: rgb(233, 233, 233); */
+                    background: #343434;
                     width:17vw;
                     height:17vw;
                     text-align:center;
