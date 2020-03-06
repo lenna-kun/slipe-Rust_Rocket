@@ -168,7 +168,7 @@ fn playing(mut cookies: Cookies) -> ApiResponse {
         let room_id: usize = cookie.value().chars().nth(0).unwrap().to_string().parse().unwrap();
         if cookie.value().chars().nth(1).unwrap() == '0' {
             let mut rules = global::RULES_RESULT.lock().unwrap();
-            if let Some(FURIGOMA) = rules[cookie.value().chars().nth(0).unwrap().to_string().parse::<usize>().unwrap()] {
+            if Some(FURIGOMA) == rules[cookie.value().chars().nth(0).unwrap().to_string().parse::<usize>().unwrap()] {
                 let mut rng = rand::thread_rng();
                 let furigoma: u8 = rng.gen::<u8>() % 2;
                 rules[cookie.value().chars().nth(0).unwrap().to_string().parse::<usize>().unwrap()] = Some(furigoma);
@@ -183,12 +183,12 @@ fn playing(mut cookies: Cookies) -> ApiResponse {
                         body: res,
                     };
                 }
-            } else if let Some(SENTE) = rules[cookie.value().chars().nth(0).unwrap().to_string().parse::<usize>().unwrap()] {
+            } else if Some(SENTE) == rules[cookie.value().chars().nth(0).unwrap().to_string().parse::<usize>().unwrap()] {
                 let res: String = global::PLAYING_SENTE_HTML.clone();
                 return ApiResponse {
                     body: res,
                 };
-            } else if let Some(GOTE) = rules[cookie.value().chars().nth(0).unwrap().to_string().parse::<usize>().unwrap()] {
+            } else if Some(GOTE) == rules[cookie.value().chars().nth(0).unwrap().to_string().parse::<usize>().unwrap()] {
                 let res: String = global::PLAYING_GOTE_HTML.clone();
                 return ApiResponse {
                     body: res,
@@ -200,7 +200,7 @@ fn playing(mut cookies: Cookies) -> ApiResponse {
             }
         } else {
             let mut rules = global::RULES_RESULT.lock().unwrap();
-            if let Some(FURIGOMA) = rules[room_id] {
+            if Some(FURIGOMA) == rules[room_id] {
                 let mut rng = rand::thread_rng();
                 let furigoma: u8 = rng.gen::<u8>() % 2;
                 rules[room_id] = Some(furigoma);
@@ -226,7 +226,7 @@ fn playing(mut cookies: Cookies) -> ApiResponse {
                         body: res,
                     };
                 }
-            } else if let Some(SENTE) = rules[room_id] {
+            } else if Some(SENTE) == rules[room_id] {
 
                 thread::spawn(move || {
                     let (tx1, rx1) = mpsc::channel();
@@ -241,7 +241,7 @@ fn playing(mut cookies: Cookies) -> ApiResponse {
                 return ApiResponse {
                     body: res,
                 };
-            } else if let Some(GOTE) = rules[room_id] {
+            } else if Some(GOTE) == rules[room_id] {
 
                 thread::spawn(move || {
                     let (tx1, rx1) = mpsc::channel();
