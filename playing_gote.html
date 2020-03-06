@@ -20,30 +20,38 @@
                         var block = board_chs.shift();
                         if (block == '0') {
                             board[i-1][j-1] = 0;
-                            e.style.backgroundImage = "none"
                             e.style.backgroundColor = "#343434";
+                            e.style.backgroundSize = "20px 20px";
+                            e.style.backgroundImage = "linear-gradient(45deg, #444444 25%, transparent 25%, transparent 75%, #444444 75%, #444444), linear-gradient(-45deg, #444444 25%, transparent 25%, transparent 75%, #444444 75%, #444444)";
+                            e.style.backgroundPosition = "0 0, 10px 10px";
                         } else if (block == '1') {
                             board[i-1][j-1] = 1;
-                            e.style.backgroundImage = "none"
-                            e.style.backgroundColor = "rgb(0, 55, 255)";
+                            e.style.backgroundColor = "#8be4f0";
+                            e.style.backgroundSize = "auto";
+                            e.style.backgroundImage = "repeating-linear-gradient(-45deg, #80deea, #80deea 7.5px, transparent 0, transparent 15px)"
                         } else if (block == '2') {
                             board[i-1][j-1] = 2;
-                            e.style.backgroundImage = "-webkit-gradient(linear, 0 0, 100% 0, color-stop(.5, #343434), color-stop(.5, transparent), to(transparent))";
-                            e.style.backgroundSize = "20px";
-                            e.style.backgroundColor = "rgb(0, 55, 255)";
+                            e.style.backgroundColor = "#8be4f0";
+                            e.style.backgroundSize = "20px 20px";
+                            e.style.backgroundPosition = "0 0, 10px 10px";
+                            e.style.backgroundImage = "linear-gradient(45deg, #80deea 25%, #80deea 25%, transparent 25%, transparent 75%, #80deea 75%, #80deea 75%), linear-gradient(-135deg, #80deea 25%, #80deea 25%, transparent 25%, transparent 75%, #80deea 75%, #80deea 75%)";
                         } else if (block == '3') {
                             board[i-1][j-1] = 3;
-                            e.style.backgroundImage = "none"
-                            e.style.backgroundColor = "rgb(255, 0, 55)";
+                            e.style.backgroundColor = "#fc693b";
+                            e.style.backgroundSize = "auto";
+                            e.style.backgroundImage = "repeating-linear-gradient(-45deg, #ff5722, #ff5722 7.5px, transparent 0, transparent 15px)"
                         } else if (block == '4') {
                             board[i-1][j-1] = 4;
-                            e.style.backgroundImage = "-webkit-gradient(linear, 0 0, 100% 0, color-stop(.5, #343434), color-stop(.5, transparent), to(transparent))";
-                            e.style.backgroundSize = "20px";
-                            e.style.backgroundColor = "rgb(255, 0, 55)";
+                            e.style.backgroundColor = "#fc693b";
+                            e.style.backgroundSize = "20px 20px";
+                            e.style.backgroundPosition = "0 0, 10px 10px";
+                            e.style.backgroundImage = "linear-gradient(45deg, #ff5722 25%, #ff5722 25%, transparent 25%, transparent 75%, #ff5722 75%, #ff5722 75%), linear-gradient(-135deg, #ff5722 25%, #ff5722 25%, transparent 25%, transparent 75%, #ff5722 75%, #ff5722 75%)";
                         } else if (block == '6') {
                             board[i-1][j-1] = 6;
-                            e.style.backgroundImage = "none"
-                            e.style.backgroundColor = "rgb(255, 255, 200)";
+                            e.style.backgroundColor = "rgba(193,0,41,1)";
+                            e.style.backgroundSize = "20px 20px";
+                            e.style.backgroundImage = "linear-gradient(45deg, rgba(204,0,81,1) 25%, transparent 25%, transparent 75%, rgba(204,0,81,1) 75%, rgba(204,0,81,1)), linear-gradient(-45deg, rgba(204,0,81,1) 25%, transparent 25%, transparent 75%, rgba(204,0,81,1) 75%, rgba(204,0,81,1))";
+                            e.style.backgroundPosition = "0 0, 10px 10px";
                         }
                     }
                 }
@@ -70,7 +78,7 @@
                         if (block == 0 || block == 6) {
                             var elem = document.getElementById("s" + String(i+1) + String(j+1));
                             if (i == 2 && j == 2) {
-                                elem.style.backgroundColor = "rgb(255, 255, 200)";
+                                elem.style.backgroundColor = "rgba(193,0,41,1)";
                                 elem.onmousedown = function () {};
                             } else {
                                 elem.style.backgroundColor = "#343434";
@@ -84,44 +92,28 @@
                 e.onmouseover = function () {
                     for (var k = num_i-1; k >= 0; k--) {
                         if (board[k][num_j] == 0 || board[k][num_j] == 6) {
-                            if (k == 2 && num_j == 2) {
-                                document.getElementById("s" + String(k+1) + String(num_j+1)).style.backgroundColor = "rgb(90, 127, 0)";
-                            } else {
-                                document.getElementById("s" + String(k+1) + String(num_j+1)).style.backgroundColor = "rgb(180, 255, 0)";
-                            }
+                            document.getElementById("s" + String(k+1) + String(num_j+1)).style.backgroundColor = "rgb(90, 127, 0)";
                         } else {
                             break;
                         }
                     }
                     for (var k = num_i+1; k < 5; k++) {
                         if (board[k][num_j] == 0 || board[k][num_j] == 6) {
-                            if (k == 2 && num_j == 2) {
-                                document.getElementById("s" + String(k+1) + String(num_j+1)).style.backgroundColor = "rgb(90, 127, 0)";
-                            } else {
-                                document.getElementById("s" + String(k+1) + String(num_j+1)).style.backgroundColor = "rgb(180, 255, 0)";
-                            }
+                            document.getElementById("s" + String(k+1) + String(num_j+1)).style.backgroundColor = "rgb(90, 127, 0)";
                         } else {
                             break;
                         }
                     }
                     for (var k = num_j-1; k >= 0; k--) {
                         if (board[num_i][k] == 0 || board[num_i][k] == 6) {
-                            if (k == 2 && num_i == 2) {
-                                document.getElementById("s" + String(num_i+1) + String(k+1)).style.backgroundColor = "rgb(90, 127, 0)";
-                            } else {
-                                document.getElementById("s" + String(num_i+1) + String(k+1)).style.backgroundColor = "rgb(180, 255, 0)";
-                            }
+                            document.getElementById("s" + String(num_i+1) + String(k+1)).style.backgroundColor = "rgb(90, 127, 0)";
                         } else {
                             break;
                         }
                     }
                     for (var k = num_j+1; k < 5; k++) {
                         if (board[num_i][k] == 0 || board[num_i][k] == 6) {
-                            if (k == 2 && num_i == 2) {
-                                document.getElementById("s" + String(num_i+1) + String(k+1)).style.backgroundColor = "rgb(90, 127, 0)";
-                            } else {
-                                document.getElementById("s" + String(num_i+1) + String(k+1)).style.backgroundColor = "rgb(180, 255, 0)";
-                            }
+                            document.getElementById("s" + String(num_i+1) + String(k+1)).style.backgroundColor = "rgb(90, 127, 0)";
                         } else {
                             break;
                         }
@@ -131,7 +123,7 @@
                     for (var k = num_i-1; k >= 0; k--) {
                         if (board[k][num_j] == 0 || board[k][num_j] == 6) {
                             if (k == 2 && num_j == 2) {
-                                document.getElementById("s" + String(k+1) + String(num_j+1)).style.backgroundColor = "rgb(255, 255, 200)";
+                                document.getElementById("s" + String(k+1) + String(num_j+1)).style.backgroundColor = "rgba(193,0,41,1)";
                             } else {
                                 document.getElementById("s" + String(k+1) + String(num_j+1)).style.backgroundColor = "#343434";
                             }
@@ -142,7 +134,7 @@
                     for (var k = num_i+1; k < 5; k++) {
                         if (board[k][num_j] == 0 || board[k][num_j] == 6) {
                             if (k == 2 && num_j == 2) {
-                                document.getElementById("s" + String(k+1) + String(num_j+1)).style.backgroundColor = "rgb(255, 255, 200)";
+                                document.getElementById("s" + String(k+1) + String(num_j+1)).style.backgroundColor = "rgba(193,0,41,1)";
                             } else {
                                 document.getElementById("s" + String(k+1) + String(num_j+1)).style.backgroundColor = "#343434";
                             }
@@ -153,7 +145,7 @@
                     for (var k = num_j-1; k >= 0; k--) {
                         if (board[num_i][k] == 0 || board[num_i][k] == 6) {
                             if (k == 2 && num_i == 2) {
-                                document.getElementById("s" + String(num_i+1) + String(k+1)).style.backgroundColor = "rgb(255, 255, 200)";
+                                document.getElementById("s" + String(num_i+1) + String(k+1)).style.backgroundColor = "rgba(193,0,41,1)";
                             } else {
                                 document.getElementById("s" + String(num_i+1) + String(k+1)).style.backgroundColor = "#343434";
                             }
@@ -164,7 +156,7 @@
                     for (var k = num_j+1; k < 5; k++) {
                         if (board[num_i][k] == 0 || board[num_i][k] == 6) {
                             if (k == 2 && num_i == 2) {
-                                document.getElementById("s" + String(num_i+1) + String(k+1)).style.backgroundColor = "rgb(255, 255, 200)";
+                                document.getElementById("s" + String(num_i+1) + String(k+1)).style.backgroundColor = "rgba(193,0,41,1)";
                             } else {
                                 document.getElementById("s" + String(num_i+1) + String(k+1)).style.backgroundColor = "#343434";
                             }
@@ -193,11 +185,7 @@
                     };
                     for (var k = num_i-1; k >= 0; k--) {
                         if (board[k][num_j] == 0 || board[k][num_j] == 6) {
-                            if (k == 2 && num_j == 2) {
-                                document.getElementById("s" + String(k+1) + String(num_j+1)).style.backgroundColor = "rgb(90, 127, 0)";
-                            } else {
-                                document.getElementById("s" + String(k+1) + String(num_j+1)).style.backgroundColor = "rgb(180, 255, 0)";
-                            }
+                            document.getElementById("s" + String(k+1) + String(num_j+1)).style.backgroundColor = "rgb(90, 127, 0)";
                             (function (num_i, num_j, num_k) {
                                 document.getElementById("s" + String(num_k+1) + String(num_j+1)).onmousedown = function () {
                                     document.getElementById("esc").style.visibility = "hidden"
@@ -212,11 +200,7 @@
                     }
                     for (var k = num_i+1; k < 5; k++) {
                         if (board[k][num_j] == 0 || board[k][num_j] == 6) {
-                            if (k == 2 && num_j == 2) {
-                                document.getElementById("s" + String(k+1) + String(num_j+1)).style.backgroundColor = "rgb(90, 127, 0)";
-                            } else {
-                                document.getElementById("s" + String(k+1) + String(num_j+1)).style.backgroundColor = "rgb(180, 255, 0)";
-                            }
+                            document.getElementById("s" + String(k+1) + String(num_j+1)).style.backgroundColor = "rgb(90, 127, 0)";
                             (function (num_i, num_j, num_k) {
                                 document.getElementById("s" + String(num_k+1) + String(num_j+1)).onmousedown = function () {
                                     document.getElementById("esc").style.visibility = "hidden"
@@ -231,11 +215,7 @@
                     }
                     for (var k = num_j-1; k >= 0; k--) {
                         if (board[num_i][k] == 0 || board[num_i][k] == 6) {
-                            if (k == 2 && num_i == 2) {
-                                document.getElementById("s" + String(num_i+1) + String(k+1)).style.backgroundColor = "rgb(90, 127, 0)";
-                            } else {
-                                document.getElementById("s" + String(num_i+1) + String(k+1)).style.backgroundColor = "rgb(180, 255, 0)";
-                            }
+                            document.getElementById("s" + String(num_i+1) + String(k+1)).style.backgroundColor = "rgb(90, 127, 0)";
                             (function (num_i, num_j, num_k) {
                                 document.getElementById("s" + String(num_i+1) + String(num_k+1)).onmousedown = function () {
                                     document.getElementById("esc").style.visibility = "hidden"
@@ -250,11 +230,7 @@
                     }
                     for (var k = num_j+1; k < 5; k++) {
                         if (board[num_i][k] == 0 || board[num_i][k] == 6) {
-                            if (k == 2 && num_i == 2) {
-                                document.getElementById("s" + String(num_i+1) + String(k+1)).style.backgroundColor = "rgb(90, 127, 0)";
-                            } else {
-                                document.getElementById("s" + String(num_i+1) + String(k+1)).style.backgroundColor = "rgb(180, 255, 0)";
-                            }
+                            document.getElementById("s" + String(num_i+1) + String(k+1)).style.backgroundColor = "rgb(90, 127, 0)";
                             (function (num_i, num_j, num_k) {
                                 document.getElementById("s" + String(num_i+1) + String(num_k+1)).onmousedown = function () {
                                     document.getElementById("esc").style.visibility = "hidden"
