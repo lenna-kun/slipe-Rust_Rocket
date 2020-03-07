@@ -9,8 +9,16 @@
             var res = 'None';
             var board = [[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]];
             var state = 0;
+            var bgm = new Audio('static/bgm.mp3');
+            bgm.play();
+            // var win = new Audio('static/win.mp3');
+            // var lose = new Audio('static/lose.mp3');
             window.addEventListener('beforeunload', function (e) {
                 e.returnValue = 'ページを離れると対局は終了します。本当に離れますか?';
+            }, false);
+            bgm.addEventListener("ended", function () {
+                bgm.currentTime = 0;
+                bgm.play();
             }, false);
             function display_board(board_str) {
                 var board_chs = board_str.split("");
