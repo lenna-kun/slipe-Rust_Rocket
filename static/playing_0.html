@@ -275,13 +275,17 @@
                         // console.log('state0 mes: ' + res);
                         if (res.startsWith('winner')) {
                             display_board(res.slice(7));
-                            // bgm.pause();
                             if (res.slice(6, 7) == '0') {
                                 win.play();
                             } else {
                                 lose.play();
                             }
-                            clearInterval(Timer);
+                            if (bgm.volume > 0.1) {
+                                bgm.volume -= 0.1;
+                            } else {
+                                bgm.volume = 0;
+                                clearInterval(Timer);
+                            }
                         }
                         else if (res.startsWith('1')) {
                             display_board(res.slice(1));
