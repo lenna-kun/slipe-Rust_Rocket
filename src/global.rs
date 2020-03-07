@@ -16,14 +16,14 @@ lazy_static! {
         file.read_to_string(&mut contents).unwrap();
         contents
     };
-    pub static ref PLAYING_SENTE_HTML: String = {
-        let mut file = File::open("playing_sente.html").unwrap();
+    pub static ref PLAYING_0_HTML: String = {
+        let mut file = File::open("playing_0.html").unwrap();
         let mut contents = String::new();
         file.read_to_string(&mut contents).unwrap();
         contents
     };
-    pub static ref PLAYING_GOTE_HTML: String = {
-        let mut file = File::open("playing_gote.html").unwrap();
+    pub static ref PLAYING_1_HTML: String = {
+        let mut file = File::open("playing_1.html").unwrap();
         let mut contents = String::new();
         file.read_to_string(&mut contents).unwrap();
         contents
