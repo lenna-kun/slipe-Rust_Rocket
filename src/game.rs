@@ -103,10 +103,12 @@ impl GameInfo {
         let mut winner: Option<u8> = None;
         let mut check_box: u8;
         loop { // main loop
-            if self.board[3][3] == KING1 {
-                winner = Some(0);
-            } else if self.board[3][3] == KING2 {
-                winner = Some(1);
+            match self.board[3][3] {
+                KING1 => winner = Some(0),
+                KING2 => winner = Some(1),
+                SOLDIER1 => winner = Some(1),
+                SOLDIER2 => winner = Some(0),
+                _ => (),
             }
             if let Some(p) = winner { // if game has been finished
                 check_box = 0b00;
