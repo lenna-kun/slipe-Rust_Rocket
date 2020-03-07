@@ -10,9 +10,9 @@
             var board = [[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]];
             var state = 0;
             var bgm = new Audio('static/bgm.mp3');
+            var win = new Audio('static/win.mp3');
+            var lose = new Audio('static/lose.mp3');
             bgm.play();
-            // var win = new Audio('static/win.mp3');
-            // var lose = new Audio('static/lose.mp3');
             window.addEventListener('beforeunload', function (e) {
                 e.returnValue = 'ページを離れると対局は終了します。本当に離れますか?';
             }, false);
@@ -275,6 +275,12 @@
                         // console.log('state0 mes: ' + res);
                         if (res.startsWith('winner')) {
                             display_board(res.slice(7));
+                            // bgm.pause();
+                            if (res.slice(6, 7) == '0') {
+                                win.play();
+                            } else {
+                                lose.play();
+                            }
                             clearInterval(Timer);
                         }
                         else if (res.startsWith('1')) {
