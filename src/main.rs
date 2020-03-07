@@ -9,7 +9,7 @@ extern crate lazy_static;
 
 use std::thread;
 use std::sync::mpsc;
-use std::io::Cursor;
+use std::io::{self, Cursor};
 use rand::Rng;
 
 pub use std::io::{Read};
@@ -28,6 +28,7 @@ use rocket::{Data, Outcome::*};
 use rocket::data::{self, FromDataSimple};
 use rocket::http::hyper::header::{AccessControlAllowOrigin};
 use rocket::http::{Cookie, Cookies};
+use rocket::response::NamedFile;
 
 pub mod global;
 pub mod game;
@@ -331,16 +332,19 @@ fn playing_set(mut cookies: Cookies, set: ApiResponse) -> ApiResponse {
     }
 }
 
-#[get("/room_list/manage/clear/room_0")]
-fn clear_room_0() -> ApiResponse {
-    if !global::STARTED.lock().unwrap()[0] {
-        global::RULES.lock().unwrap()[0] = None;
-        global::RULES_RESULT.lock().unwrap()[0] = None;
-        global::PASSWORDS.lock().unwrap()[0] = None;
-    }
-    ApiResponse {
-        body: String::from("Ok"),
-    }
+#[get("/static/win.mp3")]
+pub fn win_mp3() -> io::Result<NamedFile> {
+    NamedFile::open("static/win.mp3")
+}
+
+#[get("/static/lose.mp3")]
+pub fn lose_mp3() -> io::Result<NamedFile> {
+    NamedFile::open("static/lose.mp3")
+}
+
+#[get("/static/bgm.mp3")]
+pub fn bgm_mp3() -> io::Result<NamedFile> {
+    NamedFile::open("static/bgm.mp3")
 }
 
 #[get("/room_list/manage/clear_rooms")]
@@ -359,6 +363,6 @@ fn clear_rooms() -> ApiResponse {
 
 fn main() {
     rocket::ignite()
-        .mount("/", routes![room_list_get, room_list_post, make_room, enter_room, playing, playing_board, playing_set, clear_rooms])
+        .mount("/", routes![room_list_get, room_list_post, make_room, enter_room, playing, playing_board, playing_set, clear_rooms, win_mp3, lose_mp3, bgm_mp3])
         .launch();
 }
