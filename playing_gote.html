@@ -279,7 +279,7 @@
                             display_board(res.slice(1));
                             document.getElementById('your_turn').style.opacity = 1;
                             set();
-                            res = "reject";
+                            res = "init";
                             state = 1;
                         } else {
                             xhr.open('POST', '/playing/board', false);
@@ -291,7 +291,10 @@
                         if (res.startsWith('Ok')) {
                             document.getElementById('your_turn').style.opacity = 0.2;
                             state = 0;
-                        } else {
+                        } else if (!res.startsWith('init')) {
+                            res = "init";
+                            initialize_block();
+                            initialize_none();
                             set();
                         }
                         break;

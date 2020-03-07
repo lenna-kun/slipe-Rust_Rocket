@@ -182,7 +182,7 @@ fn playing(mut cookies: Cookies) -> ApiResponse {
                 } else {
                     let mut res: String = global::PLAYING_GOTE_HTML.clone();
                     let split_list: Vec<&str> = res.splitn(3, "'<>'").collect();
-                    res = format!("{}1{}0{}", split_list[0], split_list[1], split_list[2]);
+                    res = format!("{}0{}1{}", split_list[0], split_list[1], split_list[2]);
                     return ApiResponse {
                         body: res,
                     };
@@ -197,7 +197,7 @@ fn playing(mut cookies: Cookies) -> ApiResponse {
             } else if Some(GOTE) == rules[cookie.value().chars().nth(0).unwrap().to_string().parse::<usize>().unwrap()] {
                 let mut res: String = global::PLAYING_GOTE_HTML.clone();
                 let split_list: Vec<&str> = res.splitn(3, "'<>'").collect();
-                res = format!("{}1{}0{}", split_list[0], split_list[1], split_list[2]);
+                res = format!("{}0{}1{}", split_list[0], split_list[1], split_list[2]);
                 return ApiResponse {
                     body: res,
                 };
@@ -226,7 +226,7 @@ fn playing(mut cookies: Cookies) -> ApiResponse {
                 if furigoma == SENTE {
                     let mut res: String = global::PLAYING_GOTE_HTML.clone();
                     let split_list: Vec<&str> = res.splitn(3, "'<>'").collect();
-                    res = format!("{}0{}1{}", split_list[0], split_list[1], split_list[2]);
+                    res = format!("{}1{}0{}", split_list[0], split_list[1], split_list[2]);
                     return ApiResponse {
                         body: res,
                     };
@@ -251,7 +251,7 @@ fn playing(mut cookies: Cookies) -> ApiResponse {
 
                 let mut res: String = global::PLAYING_GOTE_HTML.clone();
                 let split_list: Vec<&str> = res.splitn(3, "'<>'").collect();
-                res = format!("{}0{}1{}", split_list[0], split_list[1], split_list[2]);
+                res = format!("{}1{}0{}", split_list[0], split_list[1], split_list[2]);
                 return ApiResponse {
                     body: res,
                 };
