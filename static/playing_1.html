@@ -275,15 +275,19 @@
                         // console.log('state0 mes: ' + res);
                         if (res.startsWith('winner')) {
                             display_board(res.slice(7));
-                            if (res.slice(6, 7) == '1') {
-                                win.play();
-                            } else {
-                                lose.play();
-                            }
                             if (bgm.volume > 0.1) {
                                 bgm.volume -= 0.1;
                             } else {
                                 bgm.volume = 0;
+                                if (res.slice(6, 7) == '1') {
+                                    win.play();
+                                    document.getElementById('youwin').style.visibility = "visible";
+                                    document.getElementById('youwin').style.opacity = "1.0";
+                                } else {
+                                    lose.play();
+                                    document.getElementById('youlose').style.visibility = "visible";
+                                    document.getElementById('youlose').style.opacity = "1.0";
+                                }
                                 clearInterval(Timer);
                             }
                         }
@@ -315,6 +319,40 @@
         <style>
             body {
                 font-family: 'Osaka-Mono';
+            }
+            #youwin {
+                position: absolute;
+                color: rgb(127, 0, 0);
+                z-index: 130;
+                /* transform: translate(-50%, -50%); */
+                left: 25%;
+                top: 45%;
+                width: 50vw;
+                height: 10vw;
+                visibility: hidden;
+                opacity: 0;
+                border: 10px solid rgb(127, 0, 0);
+                text-align: center;
+                transform: rotate(-15deg);
+                transition: .3s;
+                font-size: 10vw;
+            }
+            #youlose {
+                position: absolute;
+                color: rgb(0, 0, 127);
+                z-index: 140;
+                /* transform: translate(-50%, -50%); */
+                left: 25%;
+                top: 45%;
+                width: 50vw;
+                height: 10vw;
+                visibility: hidden;
+                opacity: 0;
+                border: 10px solid rgb(0, 0, 127);
+                text-align: center;
+                transform: rotate(-15deg);
+                transition: .3s;
+                font-size: 10vw;
             }
             @media screen and (orientation: landscape) {
                 #BOARD {
@@ -418,5 +456,7 @@
         </tbody>
         </table>
         <div id="esc">x</div>
+        <div id="youwin">YOU WIN</div>
+        <div id="youlose">YOU LOSE</div>
     </body>
 </html>

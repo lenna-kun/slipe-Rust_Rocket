@@ -36,14 +36,12 @@
                 xhr.open('POST', '/room_list', false);
                 xhr.send();
             }
-            Timer = setInterval(get_room_list, 100);
             $(function(){
-                $("#esc").click( function(){
+                $("#mask").click( function(){
                     var popup_list = [];
-                    popup_list.push(document.getElementById("esc"));
                     popup_list.push(document.getElementById("make_room"));
                     popup_list.push(document.getElementById("enter_room"));
-                    popup_list.push(document.getElementById("mask"));
+                    document.getElementById("mask").style.visibility = 'hidden';
                     for(var i = 0; i < popup_list.length; i++){
                         popup_list[i].style.opacity = '0';
                         popup_list[i].style.visibility = 'hidden';
@@ -51,9 +49,8 @@
                 })
                 $("#enter_room_button").click( function(){
                     var popup_list = [];
-                    popup_list.push(document.getElementById("esc"));
                     popup_list.push(document.getElementById("enter_room"));
-                    popup_list.push(document.getElementById("mask"));
+                    document.getElementById("mask").style.visibility = 'hidden';
                     for(var i = 0; i < popup_list.length; i++){
                         popup_list[i].style.opacity = '0';
                         popup_list[i].style.visibility = 'hidden';
@@ -61,9 +58,8 @@
                 })
                 $("#make_room_button").click( function(){
                     var popup_list = [];
-                    popup_list.push(document.getElementById("esc"));
                     popup_list.push(document.getElementById("make_room"));
-                    popup_list.push(document.getElementById("mask"));
+                    document.getElementById("mask").style.visibility = 'hidden';
                     for(var i = 0; i < popup_list.length; i++){
                         popup_list[i].style.opacity = '0';
                         popup_list[i].style.visibility = 'hidden';
@@ -72,7 +68,6 @@
                 $("#room0").click( function(){
                     room_id = 0;
                     var popup_list = [];
-                    popup_list.push(document.getElementById("esc"));
                     if (room_list[0] == 3) {
                         popup_list.push(document.getElementById("make_room"));
                     } else {
@@ -80,7 +75,6 @@
                     }
                     var mask = document.getElementById("mask");
                     mask.style.visibility = 'visible';
-                    mask.style.opacity = '0.7';
                     for(var i = 0; i < popup_list.length; i++){
                         popup_list[i].style.visibility = 'visible';
                         popup_list[i].style.opacity = '1.0';
@@ -89,7 +83,6 @@
                 $("#room1").click( function(){
                     room_id = 1;
                     var popup_list = [];
-                    popup_list.push(document.getElementById("esc"));
                     if (room_list[1] == 3) {
                         popup_list.push(document.getElementById("make_room"));
                     } else {
@@ -97,7 +90,6 @@
                     }
                     var mask = document.getElementById("mask");
                     mask.style.visibility = 'visible';
-                    mask.style.opacity = '0.7';
                     for(var i = 0; i < popup_list.length; i++){
                         popup_list[i].style.visibility = 'visible';
                         popup_list[i].style.opacity = '1.0';
@@ -106,7 +98,6 @@
                 $("#room2").click( function(){
                     room_id = 2;
                     var popup_list = [];
-                    popup_list.push(document.getElementById("esc"));
                     if (room_list[2] == 3) {
                         popup_list.push(document.getElementById("make_room"));
                     } else {
@@ -114,7 +105,6 @@
                     }
                     var mask = document.getElementById("mask");
                     mask.style.visibility = 'visible';
-                    mask.style.opacity = '0.7';
                     for(var i = 0; i < popup_list.length; i++){
                         popup_list[i].style.visibility = 'visible';
                         popup_list[i].style.opacity = '1.0';
@@ -123,7 +113,6 @@
                 $("#room3").click( function(){
                     room_id = 3;
                     var popup_list = [];
-                    popup_list.push(document.getElementById("esc"));
                     if (room_list[3] == 3) {
                         popup_list.push(document.getElementById("make_room"));
                     } else {
@@ -131,7 +120,6 @@
                     }
                     var mask = document.getElementById("mask");
                     mask.style.visibility = 'visible';
-                    mask.style.opacity = '0.7';
                     for(var i = 0; i < popup_list.length; i++){
                         popup_list[i].style.visibility = 'visible';
                         popup_list[i].style.opacity = '1.0';
@@ -179,6 +167,20 @@
                     });
                 })
             })
+            window.onload = function(){ 
+                for (var i = 0; i < 4; i++) {
+                    var elem = document.getElementById('room'+i);
+                    (function (e) {
+                        e.onmouseover = function () {
+                            e.style.backgroundColor = "#721331";
+                        }
+                        e.onmouseout = function () {
+                            e.style.backgroundColor = "#242424";
+                        }
+                    })(elem);
+                }
+                Timer = setInterval(get_room_list, 100);
+            };
         </script>
         <style>
             body {
@@ -211,40 +213,9 @@
                 left: 0px;
                 top: 0px;
                 background:#000;
-                opacity: 0.7;
                 /* transition: .3s; */
                 visibility: hidden;
-                opacity: 0;
-            }
-            @media screen and (orientation: landscape) {
-                #esc {
-                    position: absolute;
-                    z-index: 120;
-                    transform: translate(-20%, -20%);
-                    top: 20%;
-                    left: 20%;
-                    text-align: center;
-                    opacity: 1;
-                    font-size: 150px;
-                    color: #dfdfdf;
-                    cursor: pointer;
-                    visibility: hidden;
-                }
-            }
-            @media screen and (orientation: portrait) {
-                #esc {
-                    position: absolute;
-                    z-index: 120;
-                    transform: translate(-20%, -20%);
-                    top: 20%;
-                    left: 20%;
-                    text-align: center;
-                    opacity: 1;
-                    font-size: 150px;
-                    color: #dfdfdf;
-                    cursor: pointer;
-                    visibility: hidden;
-                }
+                opacity: 0.7;
             }
             #room_list {
                 position: absolute;
@@ -268,9 +239,6 @@
                 color: #FFF;
                 cursor : pointer;
             }
-            #room0:hover {
-                background: #721331;
-            }
             #room1 {
                 position: absolute;
                 left: 53vw;
@@ -280,9 +248,6 @@
                 background: #242424;
                 color: #FFF;
                 cursor : pointer;
-            }
-            #room1:hover {
-                background: #721331;
             }
             #room2 {
                 position: absolute;
@@ -295,9 +260,6 @@
                 color: #FFF;
                 cursor : pointer;
             }
-            #room2:hover {
-                background: #721331;
-            }
             #room3 {
                 position: absolute;
                 left: 53vw;
@@ -308,9 +270,6 @@
                 background: #242424;
                 color: #FFF;
                 cursor : pointer;
-            }
-            #room3:hover {
-                background: #721331;
             }
             .room_name {
                 font-size: 5vh;
@@ -427,7 +386,6 @@
             </div>
         </div>
         <div id="mask"></div>
-        <div id="esc">x</div>
         <div id="make_room" class="form-wrapper">
             <h1>Make Room</h1>
             <div class=form>
