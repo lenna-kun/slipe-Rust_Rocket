@@ -173,85 +173,85 @@
                         }
                     }
                 };
-                e.onmousedown = function () {
-                    initialize_block();
-                    document.getElementById("esc").style.visibility = "visible";
-                    document.getElementById("esc").onmousedown = function () {
-                        document.getElementById("esc").style.visibility = "hidden"
-                        initialize_none();
+                (function (esc) {
+                    esc.onmousedown = function () {
                         initialize_block();
-                        for (var i = 0; i < 5; i++) {
-                            for (var j = 0; j < 5; j++) {
-                                var block = board[4-i][4-j];
-                                if (block == 1 || block == 2) {
-                                    var elem = document.getElementById("s" + String(5-i) + String(5-j));
-                                    elem.style.cursor = "pointer";
-                                    choose(i, j, elem);
+                        esc.onmousedown = function () {
+                            initialize_none();
+                            initialize_block();
+                            for (var i = 0; i < 5; i++) {
+                                for (var j = 0; j < 5; j++) {
+                                    var block = board[4-i][4-j];
+                                    if (block == 1 || block == 2) {
+                                        var elem = document.getElementById("s" + String(5-i) + String(5-j));
+                                        elem.style.cursor = "pointer";
+                                        choose(i, j, elem);
+                                    }
                                 }
+                            }
+                        };
+                        for (var k = 3-num_i; k >= 0; k--) {
+                            if (board[k][4-num_j] == 0 || board[k][4-num_j] == 6) {
+                                document.getElementById("s" + String(k+1) + String(5-num_j)).style.backgroundColor = "rgb(90, 127, 0)";
+                                (function (num_i, num_j, num_k, esc) {
+                                    document.getElementById("s" + String(num_k+1) + String(5-num_j)).onmousedown = function () {
+                                        esc.onmousedown = function () {};
+                                        xhr.open('POST', '/playing/set', false);
+                                        xhr.send('set=' + String(num_i+1) + String(num_j+1) + '2');
+                                        initialize_none();
+                                    };
+                                })(num_i, num_j, k, esc);
+                            } else {
+                                break;
+                            }
+                        }
+                        for (var k = 5-num_i; k < 5; k++) {
+                            if (board[k][4-num_j] == 0 || board[k][4-num_j] == 6) {
+                                document.getElementById("s" + String(k+1) + String(5-num_j)).style.backgroundColor = "rgb(90, 127, 0)";
+                                (function (num_i, num_j, num_k, esc) {
+                                    document.getElementById("s" + String(num_k+1) + String(5-num_j)).onmousedown = function () {
+                                        esc.onmousedown = function () {};
+                                        xhr.open('POST', '/playing/set', false);
+                                        xhr.send('set=' + String(num_i+1) + String(num_j+1) + '0');
+                                        initialize_none();
+                                    };
+                                })(num_i, num_j, k, esc);
+                            } else {
+                                break;
+                            }
+                        }
+                        for (var k = 3-num_j; k >= 0; k--) {
+                            if (board[4-num_i][k] == 0 || board[4-num_i][k] == 6) {
+                                document.getElementById("s" + String(5-num_i) + String(k+1)).style.backgroundColor = "rgb(90, 127, 0)";
+                                (function (num_i, num_j, num_k, esc) {
+                                    document.getElementById("s" + String(5-num_i) + String(num_k+1)).onmousedown = function () {
+                                        esc.onmousedown = function () {};
+                                        xhr.open('POST', '/playing/set', false);
+                                        xhr.send('set=' + String(num_i+1) + String(num_j+1) + '1');
+                                        initialize_none();
+                                    };
+                                })(num_i, num_j, k, esc);
+                            } else {
+                                break;
+                            }
+                        }
+                        for (var k = 5-num_j; k < 5; k++) {
+                            if (board[4-num_i][k] == 0 || board[4-num_i][k] == 6) {
+                                document.getElementById("s" + String(5-num_i) + String(k+1)).style.backgroundColor = "rgb(90, 127, 0)";
+                                (function (num_i, num_j, num_k, esc) {
+                                    document.getElementById("s" + String(5-num_i) + String(num_k+1)).onmousedown = function () {
+                                        esc.onmousedown = function () {};
+                                        xhr.open('POST', '/playing/set', false);
+                                        xhr.send('set=' + String(num_i+1) + String(num_j+1) + '3');
+                                        initialize_none();
+                                    };
+                                })(num_i, num_j, k, esc);
+                            } else {
+                                break;
                             }
                         }
                     };
-                    for (var k = 3-num_i; k >= 0; k--) {
-                        if (board[k][4-num_j] == 0 || board[k][4-num_j] == 6) {
-                            document.getElementById("s" + String(k+1) + String(5-num_j)).style.backgroundColor = "rgb(90, 127, 0)";
-                            (function (num_i, num_j, num_k) {
-                                document.getElementById("s" + String(num_k+1) + String(5-num_j)).onmousedown = function () {
-                                    document.getElementById("esc").style.visibility = "hidden"
-                                    xhr.open('POST', '/playing/set', false);
-                                    xhr.send('set=' + String(num_i+1) + String(num_j+1) + '2');
-                                    initialize_none();
-                                };
-                            })(num_i, num_j, k);
-                        } else {
-                            break;
-                        }
-                    }
-                    for (var k = 5-num_i; k < 5; k++) {
-                        if (board[k][4-num_j] == 0 || board[k][4-num_j] == 6) {
-                            document.getElementById("s" + String(k+1) + String(5-num_j)).style.backgroundColor = "rgb(90, 127, 0)";
-                            (function (num_i, num_j, num_k) {
-                                document.getElementById("s" + String(num_k+1) + String(5-num_j)).onmousedown = function () {
-                                    document.getElementById("esc").style.visibility = "hidden"
-                                    xhr.open('POST', '/playing/set', false);
-                                    xhr.send('set=' + String(num_i+1) + String(num_j+1) + '0');
-                                    initialize_none();
-                                };
-                            })(num_i, num_j, k);
-                        } else {
-                            break;
-                        }
-                    }
-                    for (var k = 3-num_j; k >= 0; k--) {
-                        if (board[4-num_i][k] == 0 || board[4-num_i][k] == 6) {
-                            document.getElementById("s" + String(5-num_i) + String(k+1)).style.backgroundColor = "rgb(90, 127, 0)";
-                            (function (num_i, num_j, num_k) {
-                                document.getElementById("s" + String(5-num_i) + String(num_k+1)).onmousedown = function () {
-                                    document.getElementById("esc").style.visibility = "hidden"
-                                    xhr.open('POST', '/playing/set', false);
-                                    xhr.send('set=' + String(num_i+1) + String(num_j+1) + '1');
-                                    initialize_none();
-                                };
-                            })(num_i, num_j, k);
-                        } else {
-                            break;
-                        }
-                    }
-                    for (var k = 5-num_j; k < 5; k++) {
-                        if (board[4-num_i][k] == 0 || board[4-num_i][k] == 6) {
-                            document.getElementById("s" + String(5-num_i) + String(k+1)).style.backgroundColor = "rgb(90, 127, 0)";
-                            (function (num_i, num_j, num_k) {
-                                document.getElementById("s" + String(5-num_i) + String(num_k+1)).onmousedown = function () {
-                                    document.getElementById("esc").style.visibility = "hidden"
-                                    xhr.open('POST', '/playing/set', false);
-                                    xhr.send('set=' + String(num_i+1) + String(num_j+1) + '3');
-                                    initialize_none();
-                                };
-                            })(num_i, num_j, k);
-                        } else {
-                            break;
-                        }
-                    }
-                };
+                })(e);
             };
             function set() {
                 for (var i = 0; i < 5; i++) {
@@ -384,19 +384,6 @@
                     font-weight: bold;
                     transition: .3s;
                 }
-                #esc {
-                    position: absolute;
-                    z-index: 120;
-                    transform: translate(-20%, -20%);
-                    top: 20%;
-                    left: 20%;
-                    text-align: center;
-                    opacity: 1;
-                    font-size: 150px;
-                    color: #242424;
-                    cursor: pointer;
-                    visibility: hidden;
-                }
             }
             @media screen and (orientation: portrait) {
                 #BOARD {
@@ -428,19 +415,6 @@
                     font-weight: bold;
                     transition: .3s;
                 }
-                #esc {
-                    position: absolute;
-                    z-index: 120;
-                    transform: translate(-20%, -20%);
-                    top: 20%;
-                    left: 20%;
-                    text-align: center;
-                    opacity: 1;
-                    font-size: 150px;
-                    color: #242424;
-                    cursor: pointer;
-                    visibility: hidden;
-                }
             }
         </style>
     </head>
@@ -455,7 +429,6 @@
             <tr><td id="s51"></td><td id="s52"></td><td id="s53"></td><td id="s54"></td><td id="s55"></td></tr>
         </tbody>
         </table>
-        <div id="esc">x</div>
         <div id="youwin">YOU WIN</div>
         <div id="youlose">YOU LOSE</div>
     </body>
