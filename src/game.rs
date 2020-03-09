@@ -89,13 +89,6 @@ impl GameInfo {
         Ok(())
     }
 
-    // fn finalize(&self) {
-    //     global::RULES.lock().unwrap()[self.room_id as usize] = None;
-    //     global::RULES_RESULT.lock().unwrap()[self.room_id as usize] = None;
-    //     global::PASSWORDS.lock().unwrap()[self.room_id as usize] = None;
-    //     global::STARTED.lock().unwrap()[self.room_id as usize] = false;
-    // }
-
     pub fn play_game(&mut self) {
         let mut winner: Option<u8> = None;
         let mut check_box: u8;
@@ -231,12 +224,7 @@ impl GameInfo {
                     Err(_) => (),
                 }
             }
-
-            if self.turn == 0 {
-                self.turn = 1;
-            } else {
-                self.turn = 0;
-            }
+            self.turn ^= 1;
         }
     }
 }
