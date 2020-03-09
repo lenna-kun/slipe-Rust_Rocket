@@ -1,7 +1,4 @@
 use std::time::Instant;
-use std::sync::mpsc;
-
-use super::global;
 
 const	NONE: u8 = 0;
 const   SOLDIER1: u8 = 1;
@@ -17,13 +14,13 @@ const   TIMEOUT: u64 = 60;
 pub struct GameInfo {
     pub room_id: u8,  // 0~3
     pub turn: u8, // 0 or 1
-    pub tx: mpsc::Sender<String>,
-    pub rx: mpsc::Receiver<String>,
+    pub tx: crossbeam_channel::Sender<String>,
+    pub rx: crossbeam_channel::Receiver<String>,
     pub board: [[u8; 7]; 7],
 }
 
 impl GameInfo {
-    pub fn from_data(room_id: u8, turn: u8, tx: mpsc::Sender<String>, rx: mpsc::Receiver<String>) -> GameInfo {
+    pub fn from_data(room_id: u8, turn: u8, tx: crossbeam_channel::Sender<String>, rx: crossbeam_channel::Receiver<String>) -> GameInfo {
         GameInfo {
             room_id: room_id,
             turn: turn,
@@ -92,12 +89,12 @@ impl GameInfo {
         Ok(())
     }
 
-    fn finalize(&self) {
-        global::RULES.lock().unwrap()[self.room_id as usize] = None;
-        global::RULES_RESULT.lock().unwrap()[self.room_id as usize] = None;
-        global::PASSWORDS.lock().unwrap()[self.room_id as usize] = None;
-        global::STARTED.lock().unwrap()[self.room_id as usize] = false;
-    }
+    // fn finalize(&self) {
+    //     global::RULES.lock().unwrap()[self.room_id as usize] = None;
+    //     global::RULES_RESULT.lock().unwrap()[self.room_id as usize] = None;
+    //     global::PASSWORDS.lock().unwrap()[self.room_id as usize] = None;
+    //     global::STARTED.lock().unwrap()[self.room_id as usize] = false;
+    // }
 
     pub fn play_game(&mut self) {
         let mut winner: Option<u8> = None;
@@ -114,8 +111,8 @@ impl GameInfo {
                 check_box = 0b00;
                 let timer = Instant::now();
                 while check_box != 0b11 {
-                    if timer.elapsed().as_secs() >= TIMEOUT {
-                        self.finalize();
+                    if timer.elapsed().as_secs() >= TIMEOUT/2 {
+                        // self.finalize();
                         return;
                     }
                     match self.rx.try_recv() {
@@ -140,9 +137,13 @@ impl GameInfo {
                                     }
                                     self.tx.send(response).unwrap();
                                 } else {
-                                    self.finalize();
+                                    // self.finalize();
                                     return;
                                 }
+                            } else if let Some(_) = request.find("unload") {
+                                // self.finalize();
+                                return;
+                            } else if let Some(_) = request.find("alive") {
                             } else {
                                 let response: String = String::from("reject");
                                 self.tx.send(response).unwrap();
@@ -151,7 +152,7 @@ impl GameInfo {
                         Err(_) => (),
                     }
                 }
-                self.finalize();
+                // self.finalize();
                 println!("The winner is Player{}.", p);
                 return;
             }
@@ -159,8 +160,8 @@ impl GameInfo {
             check_box = 0b00;
             let timer = Instant::now();
             while check_box != 0b11 { // board
-                if timer.elapsed().as_secs() >= TIMEOUT {
-                    self.finalize();
+                if timer.elapsed().as_secs() >= TIMEOUT/2 {
+                    // self.finalize();
                     return;
                 }
                 match self.rx.try_recv() {
@@ -180,9 +181,13 @@ impl GameInfo {
                                 check_box |= 2_u8.pow(1 as u32);
                                 self.tx.send(response).unwrap();
                             } else {
-                                self.finalize();
+                                // self.finalize();
                                 return;
                             }
+                        } else if let Some(_) = request.find("unload") {
+                            // self.finalize();
+                            return;
+                        } else if let Some(_) = request.find("alive") {
                         } else {
                             let response: String = String::from("now board");
                             self.tx.send(response).unwrap();
@@ -195,7 +200,7 @@ impl GameInfo {
             let timer = Instant::now();
             loop { // set
                 if timer.elapsed().as_secs() >= TIMEOUT {
-                    self.finalize();
+                    // self.finalize();
                     return;
                 }
                 match self.rx.try_recv() {
@@ -214,6 +219,10 @@ impl GameInfo {
                                 let response: String = String::from("not your turn");
                                 self.tx.send(response).unwrap();
                             }
+                        } else if let Some(_) = request.find("unload") {
+                            // self.finalize();
+                            return;
+                        } else if let Some(_) = request.find("alive") {
                         } else {
                             let response: String = String::from("now set");
                             self.tx.send(response).unwrap();

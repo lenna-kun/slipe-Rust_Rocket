@@ -4,33 +4,27 @@
 #[macro_use]
 extern crate rocket;
 
-#[macro_use]
-extern crate lazy_static;
+extern crate crossbeam_channel;
 
 use std::thread;
-use std::sync::mpsc;
+use std::sync::atomic::{AtomicU8, AtomicBool, Ordering};
 use std::io::{self, Cursor};
 use rand::Rng;
 
-pub use std::io::{Read};
-pub use std::process::Command;
-pub use std::io::prelude::*;
-pub use std::time::{Duration, Instant};
+use std::io::Read;
+use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
 use rocket_contrib::json::Json;
 
-use rocket::http::Status;
 use rocket::request::Request;
-use rocket::response;
-use rocket::response::{Responder, Response};
+use rocket::response::{self, Responder, Response, NamedFile};
 use rocket::{Data, Outcome::*};
 use rocket::data::{self, FromDataSimple};
 use rocket::http::hyper::header::{AccessControlAllowOrigin};
-use rocket::http::{Cookie, Cookies};
-use rocket::response::NamedFile;
+use rocket::http::{Cookie, Cookies, Status};
+use rocket::State;
 
-pub mod global;
 pub mod game;
 
 const	SENTE: u8 = 0;
@@ -39,6 +33,39 @@ const   FURIGOMA: u8 = 2;
 
 // Always use a limit to prevent DoS attacks.
 const LIMIT: u64 = 256;
+
+struct ManagedData {
+    send_to_gamethread_txrx: [(crossbeam_channel::Sender<String>, crossbeam_channel::Receiver<String>); 4],
+    receive_from_gamethread_txrx: [(crossbeam_channel::Sender<String>, crossbeam_channel::Receiver<String>); 4],
+    passwords: [[AtomicU8; 10]; 4],
+    rules: [AtomicU8; 4],
+    rules_result: [AtomicU8; 4],
+    playing: [AtomicBool; 4],
+}
+
+impl ManagedData {
+    fn new() -> ManagedData {
+        ManagedData {
+            send_to_gamethread_txrx: [crossbeam_channel::bounded(0), crossbeam_channel::bounded(0), crossbeam_channel::bounded(0), crossbeam_channel::bounded(0)],
+            receive_from_gamethread_txrx: [crossbeam_channel::bounded(0), crossbeam_channel::bounded(0), crossbeam_channel::bounded(0), crossbeam_channel::bounded(0)],
+            passwords: [[AtomicU8::new(0), AtomicU8::new(0), AtomicU8::new(0), AtomicU8::new(0), AtomicU8::new(0), AtomicU8::new(0), AtomicU8::new(0), AtomicU8::new(0), AtomicU8::new(0), AtomicU8::new(0)], 
+                        [AtomicU8::new(0), AtomicU8::new(0), AtomicU8::new(0), AtomicU8::new(0), AtomicU8::new(0), AtomicU8::new(0), AtomicU8::new(0), AtomicU8::new(0), AtomicU8::new(0), AtomicU8::new(0)],
+                        [AtomicU8::new(0), AtomicU8::new(0), AtomicU8::new(0), AtomicU8::new(0), AtomicU8::new(0), AtomicU8::new(0), AtomicU8::new(0), AtomicU8::new(0), AtomicU8::new(0), AtomicU8::new(0)],
+                        [AtomicU8::new(0), AtomicU8::new(0), AtomicU8::new(0), AtomicU8::new(0), AtomicU8::new(0), AtomicU8::new(0), AtomicU8::new(0), AtomicU8::new(0), AtomicU8::new(0), AtomicU8::new(0)]],
+            rules: [AtomicU8::new(0), AtomicU8::new(0), AtomicU8::new(0), AtomicU8::new(0)],
+            rules_result: [AtomicU8::new(0), AtomicU8::new(0), AtomicU8::new(0), AtomicU8::new(0)],
+            playing: [AtomicBool::new(false), AtomicBool::new(false), AtomicBool::new(false), AtomicBool::new(false)],
+        }
+    }
+    fn confirm_gamethread_timeout(&self, id: usize, timeout: Duration) -> bool {
+        let val = String::from("alive?");
+        if let Ok(_) = self.send_to_gamethread_txrx[id].0.send_timeout(val, timeout) {
+            true
+        } else {
+            false
+        }
+    }
+}
 
 #[derive(Debug)]
 struct ApiResponse {
@@ -79,36 +106,37 @@ impl FromDataSimple for ApiResponse {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct RoomInfo {
-    pub id: u8,
-    pub password: String,
-    pub rule: u8,
+struct RoomInfo {
+    id: u8,
+    password: String,
+    rule: u8,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct RoomCheck {
-    pub id: u8,
-    pub password: String,
+struct RoomCheck {
+    id: u8,
+    password: String,
 }
 
 #[get("/room_list")]
-fn room_list_get(mut cookies: Cookies) -> ApiResponse {
+fn room_list_get(mut cookies: Cookies) -> io::Result<NamedFile> {
     cookies.remove_private(Cookie::named("id"));
-    let res: String = global::ROOMLIST_HTML.clone();
-    ApiResponse {
-        body: res,
-    }
+    NamedFile::open("static/room_list.html")
 }
 
 #[post("/room_list")]
-fn room_list_post() -> ApiResponse {
+fn room_list_post(state: State<ManagedData>) -> ApiResponse {
     let mut room_list: [u8; 4] = [0; 4];
-    let rules = global::RULES.lock().unwrap();
     for i in 0..4 {
-        if let Some(r) = rules[i] {
-            room_list[i] = r;
-        } else {
+        if state.rules[i].load(Ordering::Relaxed) == 3 {
             room_list[i] = 3;
+        } else if !state.confirm_gamethread_timeout(i, Duration::from_millis(100)) {
+            room_list[i] = 3;
+            state.rules[i].swap(3, Ordering::Relaxed);
+            state.rules_result[i].swap(3, Ordering::Relaxed);
+            state.playing[i].swap(false, Ordering::Relaxed);
+        } else {
+            room_list[i] = state.rules[i].load(Ordering::Relaxed);
         }
     }
     ApiResponse {
@@ -117,186 +145,145 @@ fn room_list_post() -> ApiResponse {
 }
 
 #[post("/make_room", data = "<room_info>")]
-fn make_room(mut cookies: Cookies, room_info: Json<RoomInfo>) -> ApiResponse {
-    let mut rules = global::RULES.lock().unwrap();
-    if let None = rules[room_info.0.id as usize] {
-        global::PASSWORDS.lock().unwrap()[room_info.0.id as usize] = Some(room_info.0.password);
-        rules[room_info.0.id as usize] = Some(room_info.0.rule);
-        global::RULES_RESULT.lock().unwrap()[room_info.0.id as usize] = Some(room_info.0.rule);
-        let cookie = Cookie::build("id", format!("{}0", room_info.0.id))
-            .path("/")
-            // .secure(true)
-            .finish();
-        cookies.add_private(cookie);
-        ApiResponse {
-            body: String::from("Ok"),
-        }
-    } else {
-        ApiResponse {
+fn make_room(mut cookies: Cookies, state: State<ManagedData>, room_info: Json<RoomInfo>) -> ApiResponse {
+    let id: usize = room_info.0.id as usize;
+    if state.confirm_gamethread_timeout(id, Duration::from_millis(100)) { // if the game thread existed
+        return ApiResponse {
             body: String::from("Err"),
+        };
+    }
+    let password_bytes = room_info.0.password.as_bytes();
+    for i in 0..state.passwords[id].len() { // set password
+        if i < room_info.0.password.len() {
+            state.passwords[id][i].swap(password_bytes[i], Ordering::Relaxed);
+        } else {
+            state.passwords[id][i].swap(0, Ordering::Relaxed);
         }
+    }
+    state.rules[id].swap(room_info.0.rule, Ordering::Relaxed); // set rule
+    state.rules_result[id].swap(room_info.0.rule, Ordering::Relaxed); // set rule
+    let cookie = Cookie::build("id", format!("{}0", id)) // create cookie
+        .path("/")
+        // .secure(true)
+        .finish();
+    cookies.add_private(cookie);
+    let (tx, rx) = (state.receive_from_gamethread_txrx[id].0.clone(), state.send_to_gamethread_txrx[id].1.clone());
+    match room_info.0.rule {
+        FURIGOMA => {
+            let mut rng = rand::thread_rng();
+            let furigoma: u8 = rng.gen::<u8>() % 2;
+            state.rules_result[id].swap(furigoma, Ordering::Relaxed);
+            thread::spawn(move || {
+                let mut game = game::GameInfo::from_data(id as u8, furigoma, tx, rx);
+                game.play_game();
+            });
+            return ApiResponse {
+                body: String::from("Ok"),
+            };
+        },
+        SENTE => {
+            thread::spawn(move || {
+                let mut game = game::GameInfo::from_data(id as u8, SENTE, tx, rx);
+                game.play_game();
+            });
+            return ApiResponse {
+                body: String::from("Ok"),
+            };
+        },
+        GOTE => {
+            thread::spawn(move || {
+                let mut game = game::GameInfo::from_data(id as u8, GOTE, tx, rx);
+                game.play_game();
+            });
+            return ApiResponse {
+                body: String::from("Ok"),
+            };
+        },
+        _ => {
+            return ApiResponse {
+                body: String::from("reject"),
+            };
+        },
     }
 }
 
 #[post("/enter_room", data = "<room_check>")]
-fn enter_room(mut cookies: Cookies, room_check: Json<RoomCheck>) -> ApiResponse {
-    if let Some(p) = &global::PASSWORDS.lock().unwrap()[room_check.0.id as usize] {
-        let chk = global::STARTED.lock().unwrap();
-        if room_check.0.password == *p && !chk[room_check.0.id as usize] {
-            let cookie = Cookie::build("id", format!("{}1", room_check.0.id))
-                .path("/")
-                // .secure(true)
-                .finish();
-            cookies.add_private(cookie);
-            ApiResponse {
-                body: String::from("Ok"),
-            }
-        } else {
-            ApiResponse {
-                body: String::from("Err"),
-            }
-        }
-    } else {
-        ApiResponse {
+fn enter_room(mut cookies: Cookies, state: State<ManagedData>, room_check: Json<RoomCheck>) -> ApiResponse {
+    let id: usize = room_check.0.id as usize;
+    if !state.confirm_gamethread_timeout(id, Duration::from_millis(100)) { // if game thread has not been created
+        return ApiResponse {
             body: String::from("Err"),
-        }
+        };
     }
-}
-
-#[get("/playing")]
-fn playing(mut cookies: Cookies) -> ApiResponse {
-    if let Some(cookie) = cookies.get_private("id") {
-        let room_id: usize = cookie.value().chars().nth(0).unwrap().to_string().parse().unwrap();
-        if cookie.value().chars().nth(1).unwrap() == '0' {
-            let mut rules = global::RULES_RESULT.lock().unwrap();
-            if Some(FURIGOMA) == rules[cookie.value().chars().nth(0).unwrap().to_string().parse::<usize>().unwrap()] {
-                let mut rng = rand::thread_rng();
-                let furigoma: u8 = rng.gen::<u8>() % 2;
-                rules[cookie.value().chars().nth(0).unwrap().to_string().parse::<usize>().unwrap()] = Some(furigoma);
-                if furigoma == SENTE {
-                    let res: String = global::PLAYING_0_HTML.clone();
-                    return ApiResponse {
-                        body: res,
-                    };
-                } else {
-                    let res: String = global::PLAYING_0_HTML.clone();
-                    return ApiResponse {
-                        body: res,
-                    };
-                }
-            } else if Some(SENTE) == rules[cookie.value().chars().nth(0).unwrap().to_string().parse::<usize>().unwrap()] {
-                let res: String = global::PLAYING_0_HTML.clone();
-                return ApiResponse {
-                    body: res,
-                };
-            } else if Some(GOTE) == rules[cookie.value().chars().nth(0).unwrap().to_string().parse::<usize>().unwrap()] {
-                let res: String = global::PLAYING_0_HTML.clone();
-                return ApiResponse {
-                    body: res,
-                };
-            } else {
-                return ApiResponse {
-                    body: String::from("reject"),
-                };
-            }
-        } else {
-            let mut rules = global::RULES_RESULT.lock().unwrap();
-            if Some(FURIGOMA) == rules[room_id] {
-                let mut rng = rand::thread_rng();
-                let furigoma: u8 = rng.gen::<u8>() % 2;
-                rules[room_id] = Some(furigoma);
-                
-                thread::spawn(move || {
-                    let (tx1, rx1) = mpsc::channel();
-                    let (tx2, rx2) = mpsc::channel();
-                    global::SENDERS.lock().unwrap()[room_id] = Some(tx1);
-                    global::RECEIVERS.lock().unwrap()[room_id] = Some(rx2);
-                    let mut game = game::GameInfo::from_data(room_id as u8, furigoma, tx2, rx1);
-                    game.play_game();
-                });
-                global::STARTED.lock().unwrap()[room_id] = true;
-
-                if furigoma == SENTE {
-                    let res: String = global::PLAYING_1_HTML.clone();
-                    return ApiResponse {
-                        body: res,
-                    };
-                } else {
-                    let res: String = global::PLAYING_1_HTML.clone();
-                    return ApiResponse {
-                        body: res,
-                    };
-                }
-            } else if Some(SENTE) == rules[room_id] {
-
-                thread::spawn(move || {
-                    let (tx1, rx1) = mpsc::channel();
-                    let (tx2, rx2) = mpsc::channel();
-                    global::SENDERS.lock().unwrap()[room_id] = Some(tx1);
-                    global::RECEIVERS.lock().unwrap()[room_id] = Some(rx2);
-                    let mut game = game::GameInfo::from_data(room_id as u8, SENTE, tx2, rx1);
-                    game.play_game();
-                });
-
-                let res: String = global::PLAYING_1_HTML.clone();
-                return ApiResponse {
-                    body: res,
-                };
-            } else if Some(GOTE) == rules[room_id] {
-
-                thread::spawn(move || {
-                    let (tx1, rx1) = mpsc::channel();
-                    let (tx2, rx2) = mpsc::channel();
-                    global::SENDERS.lock().unwrap()[room_id] = Some(tx1);
-                    global::RECEIVERS.lock().unwrap()[room_id] = Some(rx2);
-                    let mut game = game::GameInfo::from_data(room_id as u8, GOTE, tx2, rx1);
-                    game.play_game();
-                });
-
-                let res: String = global::PLAYING_1_HTML.clone();
-                return ApiResponse {
-                    body: res,
-                };
-            } else {
-                return ApiResponse {
-                    body: String::from("reject"),
-                };
-            }
-        }
-    } else {
-        ApiResponse {
-            body: String::from("reject"),
-        }
+    if state.playing[id].load(Ordering::Relaxed) { // if other "player2" has already entered the room
+        return ApiResponse {
+            body: String::from("Err"),
+        };
     }
-}
-
-#[post("/playing/board")]
-fn playing_board(mut cookies: Cookies) -> ApiResponse {
-    if let Some(cookie) = cookies.get_private("id") {
-        let val: String = format!("{}board", cookie.value().chars().nth(1).unwrap());
-        if let None = global::SENDERS.lock().unwrap()[cookie.value().chars().nth(0).unwrap().to_string().parse::<usize>().unwrap()].as_ref() {
-            return ApiResponse {
-                body: String::from("Err"),
-            };
-        }
-        if let Err(_) = global::SENDERS.lock().unwrap()[cookie.value().chars().nth(0).unwrap().to_string().parse::<usize>().unwrap()].as_ref().unwrap().send(val) {
-            return ApiResponse {
-                body: String::from("Err"),
-            };
-        }
-        loop {
-            if let Ok(response) = global::RECEIVERS.lock().unwrap()[cookie.value().chars().nth(0).unwrap().to_string().parse::<usize>().unwrap()].as_ref().unwrap().recv_timeout(Duration::from_millis(100)) {
-                if let Some(_) = response.find("winner") {
-                    cookies.remove_private(Cookie::named("id"));
-                }
-                return ApiResponse {
-                    body: response,
-                };
-            } else {
+    let password_bytes = room_check.0.password.as_bytes();
+    for i in 0..state.passwords[id].len() {
+        if i < room_check.0.password.len() {
+            if state.passwords[id][i].load(Ordering::Relaxed) != password_bytes[i] { // wrong password
                 return ApiResponse {
                     body: String::from("Err"),
                 };
             }
+        } else {
+            if state.passwords[id][i].load(Ordering::Relaxed) != 0 { // wrong password
+                return ApiResponse {
+                    body: String::from("Err"),
+                };
+            }
+        }
+    }
+    let cookie = Cookie::build("id", format!("{}1", room_check.0.id))
+        .path("/")
+        // .secure(true)
+        .finish();
+    cookies.add_private(cookie);
+    ApiResponse {
+        body: String::from("Ok"),
+    }
+}
+
+#[get("/playing")]
+fn playing(mut cookies: Cookies) -> io::Result<NamedFile> {
+    if let Some(cookie) = cookies.get_private("id") {
+        if cookie.value().chars().nth(1).unwrap() == '0' {
+            NamedFile::open("static/playing_0.html")
+        } else {
+            NamedFile::open("static/playing_1.html")
+        }
+    } else {
+        NamedFile::open("static/reject.html")
+    }
+}
+
+#[post("/playing/board")]
+fn playing_board(mut cookies: Cookies, state: State<ManagedData>) -> ApiResponse {
+    if let Some(cookie) = cookies.get_private("id") {
+        let id: usize = cookie.value().chars().nth(0).unwrap().to_string().parse().unwrap();
+        let val: String = format!("{}board", cookie.value().chars().nth(1).unwrap());
+        match state.send_to_gamethread_txrx[id].0.send_timeout(val, Duration::from_millis(100)) {
+            Ok(_) => {
+                if let Ok(response) = state.receive_from_gamethread_txrx[id].1.recv_timeout(Duration::from_millis(100)) {
+                    if let Some(_) = response.find("winner") {
+                        cookies.remove_private(Cookie::named("id"));
+                    }
+                    return ApiResponse {
+                        body: response,
+                    };
+                } else {
+                    return ApiResponse {
+                        body: String::from("Err"),
+                    };
+                }
+            },
+            Err(_) => {
+                return ApiResponse {
+                    body: String::from("Err"),
+                };
+            },
         }
     } else {
         return ApiResponse {
@@ -306,24 +293,56 @@ fn playing_board(mut cookies: Cookies) -> ApiResponse {
 }
 
 #[post("/playing/set", data = "<set>")]
-fn playing_set(mut cookies: Cookies, set: ApiResponse) -> ApiResponse {
+fn playing_set(mut cookies: Cookies, state: State<ManagedData>, set: ApiResponse) -> ApiResponse {
     if let Some(cookie) = cookies.get_private("id") {
+        let id: usize = cookie.value().chars().nth(0).unwrap().to_string().parse().unwrap();
         let set: String = set.body[4..7].to_string();
         let mut val: String = format!("{}set{:?}", cookie.value().chars().nth(1).unwrap(), set);
         val.retain(|c| c != '"');
-        println!("{:?}", val);
-        global::SENDERS.lock().unwrap()[cookie.value().chars().nth(0).unwrap().to_string().parse::<usize>().unwrap()].as_ref().unwrap().send(val).unwrap();
-        loop {
-            if let Ok(response) = global::RECEIVERS.lock().unwrap()[cookie.value().chars().nth(0).unwrap().to_string().parse::<usize>().unwrap()].as_ref().unwrap().recv_timeout(Duration::from_millis(100)) {
-                println!("{:?}", response);
-                return ApiResponse {
-                    body: response,
-                };
-            } else {
+        // println!("{:?}", val);
+        match state.send_to_gamethread_txrx[id].0.send_timeout(val, Duration::from_millis(100)) {
+            Ok(_) => {
+                if let Ok(response) = state.receive_from_gamethread_txrx[id].1.recv_timeout(Duration::from_millis(100)) {
+                    // println!("{:?}", response);
+                    return ApiResponse {
+                        body: response,
+                    };
+                } else {
+                    return ApiResponse {
+                        body: String::from("Err"),
+                    };
+                }
+            },
+            Err(_) => {
                 return ApiResponse {
                     body: String::from("Err"),
                 };
-            }
+            },
+        }
+    } else {
+        return ApiResponse {
+            body: String::from("reject"),
+        };
+    }
+}
+
+#[post("/playing/unload")]
+fn unload(mut cookies: Cookies, state: State<ManagedData>) -> ApiResponse {
+    if let Some(cookie) = cookies.get_private("id") {
+        let id: usize = cookie.value().chars().nth(0).unwrap().to_string().parse().unwrap();
+        let val = String::from("unload");
+        match state.send_to_gamethread_txrx[id].0.send_timeout(val, Duration::from_millis(100)) {
+            Ok(_) => {
+                cookies.remove_private(Cookie::named("id"));
+                return ApiResponse {
+                    body: String::from("Ok"),
+                };
+            },
+            Err(_) => {
+                return ApiResponse {
+                    body: String::from("Err"),
+                };
+            },
         }
     } else {
         return ApiResponse {
@@ -333,36 +352,23 @@ fn playing_set(mut cookies: Cookies, set: ApiResponse) -> ApiResponse {
 }
 
 #[get("/static/win.mp3")]
-pub fn win_mp3() -> io::Result<NamedFile> {
+fn win_mp3() -> io::Result<NamedFile> {
     NamedFile::open("static/win.mp3")
 }
 
 #[get("/static/lose.mp3")]
-pub fn lose_mp3() -> io::Result<NamedFile> {
+fn lose_mp3() -> io::Result<NamedFile> {
     NamedFile::open("static/lose.mp3")
 }
 
 #[get("/static/bgm.mp3")]
-pub fn bgm_mp3() -> io::Result<NamedFile> {
+fn bgm_mp3() -> io::Result<NamedFile> {
     NamedFile::open("static/bgm.mp3")
-}
-
-#[get("/room_list/manage/clear_rooms")]
-fn clear_rooms() -> ApiResponse {
-    for i in 0..4 {
-        if !global::STARTED.lock().unwrap()[i] {
-            global::RULES.lock().unwrap()[i] = None;
-            global::RULES_RESULT.lock().unwrap()[i] = None;
-            global::PASSWORDS.lock().unwrap()[i] = None;
-        }
-    }
-    ApiResponse {
-        body: String::from("Ok"),
-    }
 }
 
 fn main() {
     rocket::ignite()
-        .mount("/", routes![room_list_get, room_list_post, make_room, enter_room, playing, playing_board, playing_set, clear_rooms, win_mp3, lose_mp3, bgm_mp3])
+        .manage(ManagedData::new())
+        .mount("/", routes![room_list_get, room_list_post, make_room, enter_room, playing, playing_board, playing_set, unload, win_mp3, lose_mp3, bgm_mp3])
         .launch();
 }
