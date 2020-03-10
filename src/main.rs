@@ -280,6 +280,7 @@ fn playing_board(mut cookies: Cookies, state: State<ManagedData>) -> ApiResponse
                 }
             },
             Err(_) => {
+                cookies.remove_private(Cookie::named("id"));
                 return ApiResponse {
                     body: String::from("Err"),
                 };
@@ -299,11 +300,9 @@ fn playing_set(mut cookies: Cookies, state: State<ManagedData>, set: ApiResponse
         let set: String = set.body[4..7].to_string();
         let mut val: String = format!("{}set{:?}", cookie.value().chars().nth(1).unwrap(), set);
         val.retain(|c| c != '"');
-        // println!("{:?}", val);
         match state.send_to_gamethread_txrx[id].0.send_timeout(val, Duration::from_millis(100)) {
             Ok(_) => {
                 if let Ok(response) = state.receive_from_gamethread_txrx[id].1.recv_timeout(Duration::from_millis(100)) {
-                    // println!("{:?}", response);
                     return ApiResponse {
                         body: response,
                     };
@@ -314,6 +313,7 @@ fn playing_set(mut cookies: Cookies, state: State<ManagedData>, set: ApiResponse
                 }
             },
             Err(_) => {
+                cookies.remove_private(Cookie::named("id"));
                 return ApiResponse {
                     body: String::from("Err"),
                 };
@@ -339,6 +339,7 @@ fn unload(mut cookies: Cookies, state: State<ManagedData>) -> ApiResponse {
                 };
             },
             Err(_) => {
+                cookies.remove_private(Cookie::named("id"));
                 return ApiResponse {
                     body: String::from("Err"),
                 };
