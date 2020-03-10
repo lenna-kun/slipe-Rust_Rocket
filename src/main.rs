@@ -247,11 +247,12 @@ fn enter_room(mut cookies: Cookies, state: State<ManagedData>, room_check: Json<
 }
 
 #[get("/playing")]
-fn playing(mut cookies: Cookies) -> io::Result<NamedFile> {
+fn playing(mut cookies: Cookies, state: State<ManagedData>) -> io::Result<NamedFile> {
     if let Some(cookie) = cookies.get_private("id") {
         if cookie.value().chars().nth(1).unwrap() == '0' {
             NamedFile::open("static/playing_0.html")
         } else {
+            state.playing[cookie.value().chars().nth(0).unwrap().to_string().parse::<usize>().unwrap()].swap(true, Ordering::Relaxed);
             NamedFile::open("static/playing_1.html")
         }
     } else {
