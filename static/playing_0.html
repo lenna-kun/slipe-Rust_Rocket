@@ -199,6 +199,7 @@
                                         xhr.open('POST', '/playing/set', false);
                                         xhr.send('set=' + String(num_i+1) + String(num_j+1) + '2');
                                         initialize_none();
+                                        state = 2;
                                     };
                                 })(num_i, num_j, k, esc);
                             } else {
@@ -214,6 +215,7 @@
                                         xhr.open('POST', '/playing/set', false);
                                         xhr.send('set=' + String(num_i+1) + String(num_j+1) + '0');
                                         initialize_none();
+                                        state = 2;
                                     };
                                 })(num_i, num_j, k, esc);
                             } else {
@@ -229,6 +231,7 @@
                                         xhr.open('POST', '/playing/set', false);
                                         xhr.send('set=' + String(num_i+1) + String(num_j+1) + '1');
                                         initialize_none();
+                                        state = 2;
                                     };
                                 })(num_i, num_j, k, esc);
                             } else {
@@ -244,6 +247,7 @@
                                         xhr.open('POST', '/playing/set', false);
                                         xhr.send('set=' + String(num_i+1) + String(num_j+1) + '3');
                                         initialize_none();
+                                        state = 2;
                                     };
                                 })(num_i, num_j, k, esc);
                             } else {
@@ -266,13 +270,11 @@
                 }
             }
             var state_checker = function () {
-                // console.log('checker: state' + state);
                 if (xhr.readyState === 4 && xhr.status === 200) {
                     res = xhr.responseText;
                 }
                 switch (state) {
                     case 0: // ボード情報受信
-                        // console.log('state0 mes: ' + res);
                         if (res.startsWith('winner')) {
                             display_board(res.slice(7));
                             if (bgm.volume > 0.1) {
@@ -298,18 +300,23 @@
                         } else if (res.startsWith('0')) {
                             display_board(res.slice(1));
                             document.getElementById('your_turn').style.opacity = 1;
-                            set();
                             state = 1;
+                            set();
                         } else {
                             xhr.open('POST', '/playing/board', false);
                             xhr.send();
                         }
                         break;
                     case 1:
-                        // console.log('state1 mes: ' + res);
+                        // waiting for input
+                        break;
+                    case 2:
                         if (res.startsWith('Ok')) {
                             document.getElementById('your_turn').style.opacity = 0.2;
                             state = 0;
+                        } else {
+                            state = 1;
+                            set();
                         }
                         break;
                 }
